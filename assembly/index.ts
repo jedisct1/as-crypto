@@ -8,10 +8,14 @@ let ad = String.UTF8.encode(adStr, false);
 let nonce = new ArrayBuffer(12);
 Random.randomFill(nonce);
 
+// --- Hashing
+
 Console.log("\n--- Hashing");
 Console.log("\nHash(" + msgStr + ")");
 let h = Hash.hash("SHA-256", msg, 32)!;
 Console.log(Uint8Array.wrap(h).toString());
+
+// --- Encryption
 
 Console.log("\n--- Encryption");
 let key = SymmetricKey.generate("AES-256-GCM")!;
@@ -32,6 +36,8 @@ let decrypted = aead.decrypt(ciphertext)!;
 Console.log("\nDecrypt(ct, ad=" + adStr + "):");
 Console.log(String.UTF8.decode(decrypted));
 
+// --- Encryption with detached tags
+
 aead = Aead.new(key, nonce, ad)!;
 let ciphertextAndTag = aead.encryptDetached(msg)!;
 Console.log("\nEncryptDetached(msg=" + msgStr + ", ad=" + adStr + "):");
@@ -44,6 +50,8 @@ aead = Aead.new(key, nonce, ad)!;
 decrypted = aead.decryptDetached(ciphertextAndTag)!;
 Console.log("\nDecryptDetached(ct, tag, ad = " + adStr + "): ");
 Console.log(String.UTF8.decode(decrypted));
+
+// --- Authentication
 
 Console.log("\n--- Authentication");
 key = SymmetricKey.generate("HMAC/SHA-256")!;
