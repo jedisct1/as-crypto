@@ -62,7 +62,7 @@ export class Hash {
         this.state = state;
     }
 
-    static new(alg: string, key: SymmetricKey | null = null): Hash | null {
+    protected static new(alg: string, key: SymmetricKey | null = null): Hash | null {
         let wasiAlg = new crypto.WasiString(alg);
         let optKey = key ? crypto.opt_symmetric_key.some(key.handle) : crypto.opt_symmetric_key.none();
         if ((error.last = crypto.symmetric_state_open(wasiAlg.ptr, wasiAlg.length, optKey, crypto.opt_options.none(), buf))) {
@@ -70,6 +70,14 @@ export class Hash {
         }
         let state = load<crypto.symmetric_state>(buf);
         return new Hash(state);
+    }
+
+    static keyed(key: SymmetricKey): Hash | null {
+        return Hash.new(key.alg, key);
+    }
+
+    static unkeyed(alg: string): Hash | null {
+        return Hash.new(alg);
     }
 
     absorb(msg: ArrayBuffer): bool {

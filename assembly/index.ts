@@ -11,14 +11,24 @@ Random.randomFill(nonce);
 // --- Hashing
 
 Console.log("\n--- Hashing");
-Console.log("\nHash(" + msgStr + ")");
 let h = Hash.hash("SHA-256", msg, 32)!;
+Console.log("\SHA-256(" + msgStr + "):");
+Console.log(Uint8Array.wrap(h).toString());
+
+// Keyed hashing
+
+Console.log("\n--- Keyed hashing");
+let key = SymmetricKey.generate("Xoodyak-256")!;
+let st = Hash.keyed(key)!;
+st.absorb(msg);
+h = st.squeeze(16)!;
+Console.log("\Xoodyak-256(k, " + msgStr + ", 16):");
 Console.log(Uint8Array.wrap(h).toString());
 
 // --- Encryption
 
 Console.log("\n--- Encryption");
-let key = SymmetricKey.generate("AES-256-GCM")!;
+key = SymmetricKey.generate("AES-256-GCM")!;
 let rawKey = key.export()!;
 Console.log("\nGenerated AES key:");
 Console.log(Uint8Array.wrap(rawKey).toString());
