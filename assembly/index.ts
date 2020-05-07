@@ -1,4 +1,4 @@
-import { Console, Random } from "./as-wasi";
+import { Console, Random } from "as-wasi";
 import { Hash, SymmetricKey, Aead } from "./crypto";
 
 let msgStr = "test";

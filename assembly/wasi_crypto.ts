@@ -538,81 +538,6 @@ export class opt_options {
     }
 }
 
-/** opt_trou */
-// @ts-ignore: decorator
-@unmanaged
-export class opt_trou {
-    tag: opt_options_u;
-    private __pad16_0: u16;
-
-    constructor(tag: opt_options_u) {
-        this.tag = tag;
-        memory.fill(changetype<usize>(this) + 1, 0, 1);
-    }
-
-    // @ts-ignore: default
-    static new<T>(tag: u8, val: T = 0): opt_trou {
-        let tu = new opt_trou(tag);
-        tu.set(val);
-        return tu;
-    }
-
-    get<T>(): T {
-        // @ts-ignore: cast
-        let valBuf = changetype<usize>(this) + 1;
-        if (isReference<T>()) {
-            return changetype<T>(valBuf);
-        } else {
-            return load<T>(valBuf);
-        }
-    }
-
-    // @ts-ignore: default
-    set<T>(val: T = 0): void {
-        // @ts-ignore: cast
-        let valBuf = changetype<usize>(this) + 1;
-        memory.fill(valBuf, 0, 1);
-        if (isReference<T>()) {
-            (val !== null) && memory.copy(valBuf, changetype<usize>(val), offsetof<T>());
-        } else {
-            store<T>(valBuf, val)
-        }
-    }
-
-    // --- some: u8 if tag=0
-
-    static some(val: u8): opt_trou {
-        return opt_trou.new(0, val);
-    }
-
-    set_some(val: u8): void {
-        this.tag = 0;
-        this.set(val);
-    }
-
-    is_some(): bool {
-        return this.tag === 0;
-    }
-
-    get_some(): u8 {
-        return this.get<u8>();
-    }
-
-    // --- none: void if tag=1
-
-    static none(): opt_trou {
-        return opt_trou.new(1);
-    }
-
-    set_none(): void {
-        this.tag = 1;
-    }
-
-    is_none(): bool {
-        return this.tag === 1;
-    }
-}
-
 /**
  * Symmetric key index, only required by the Interface Types translation layer.
  */
@@ -702,30 +627,6 @@ export class opt_symmetric_key {
     is_none(): bool {
         return this.tag === 1;
     }
-}
-
-/** pop */
-// @ts-ignore: decorator
-@unmanaged
-class pop {
-    trou: u64;
-    dbal: opt_options;
-}
-
-/** popa */
-// @ts-ignore: decorator
-@unmanaged
-class popa {
-    trou: u64;
-    dbal: pop;
-}
-
-/** popb */
-// @ts-ignore: decorator
-@unmanaged
-class popb {
-    trou: u64;
-    dbal: WasiString;
 }
 
 
