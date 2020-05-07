@@ -293,3 +293,33 @@ export class Hkdf {
         return out;
     }
 }
+
+export class XofKdf {
+    state: crypto.symmetric_state;
+
+    protected constructor(state: crypto.symmetric_state) {
+        this.state = state;
+    }
+
+    static new(key: SymmetricKey, context: ArrayBuffer | null = null): XofKdf | null {
+        let wasiAlg = new crypto.WasiString(key.alg);
+        if ((error.last = crypto.symmetric_state_open(wasiAlg.ptr, wasiAlg.length, crypto.opt_symmetric_key.some(key.handle), crypto.opt_options.none(), buf))) {
+            return null;
+        }
+        let state = load<crypto.symmetric_state>(buf);
+        if (context) {
+            if ((error.last = crypto.symmetric_state_absorb(state, changetype<ptr<u8>>(context), context.byteLength))) {
+                return null;
+            }
+        }
+        return new XofKdf(state);
+    }
+
+    squeeze(outLen: usize): ArrayBuffer | null {
+        let out = new ArrayBuffer(outLen as i32);
+        if ((error.last = crypto.symmetric_state_squeeze(this.state, changetype<usize>(out), outLen))) {
+            return null;
+        }
+        return out;
+    }
+}

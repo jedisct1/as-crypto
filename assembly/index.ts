@@ -1,5 +1,5 @@
 import { Console, Random } from "as-wasi";
-import { Auth, Hash, Hkdf, SymmetricKey, Aead } from "./crypto";
+import { Auth, Hash, Hkdf, XofKdf, SymmetricKey, Aead } from "./crypto";
 
 let msgStr = "test";
 let msg = String.UTF8.encode("test", false);
@@ -67,10 +67,23 @@ Console.log(String.UTF8.decode(decrypted));
 
 // --- HKDF
 
-Console.log("\n--- HKDF");
+Console.log("\n--- HKDF/SHA-512");
 key = SymmetricKey.generate("HKDF-EXTRACT/SHA-512")!;
 let prk = Hkdf.extract("HKDF-EXPAND/SHA-512", key, salt)!;
 let derivedKey = Hkdf.expand(prk, info, 32)!;
+Console.log("\nHKDF-Expand:");
+Console.log(Uint8Array.wrap(derivedKey).toString());
+
+// --- XOF-based KDF
+
+Console.log("\n--- KDF/XOF");
+key = SymmetricKey.generate("Xoodyak-128")!;
+let xof = XofKdf.new(key, salt)!;
+Console.log("\nSqueezing 32 bytes:")
+derivedKey = xof.squeeze(32)!;
+Console.log(Uint8Array.wrap(derivedKey).toString());
+Console.log("\nSqueezing 16 more bytes:")
+derivedKey = xof.squeeze(16)!;
 Console.log(Uint8Array.wrap(derivedKey).toString());
 
 // --- Authentication
@@ -81,6 +94,6 @@ let tag = Auth.auth(msg, key)!;
 Console.log("\nHMAC/SHA-256(" + msgStr + "):");
 Console.log(Uint8Array.wrap(tag).toString());
 
-Console.log("Verifies:")
+Console.log("\nVerifies:")
 let verified = Auth.verify(msg, key, tag);
 Console.log(verified.toString());
