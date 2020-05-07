@@ -88,7 +88,7 @@ export class Hash {
         return out;
     }
 
-    static digest(alg: string, msg: ArrayBuffer, outLen: usize, key: SymmetricKey | null = null): ArrayBuffer | null {
+    static hash(alg: string, msg: ArrayBuffer, outLen: usize, key: SymmetricKey | null = null): ArrayBuffer | null {
         let st = Hash.new(alg, key);
         if (!st) {
             return null;
@@ -178,5 +178,73 @@ export class Aead {
             return null;
         }
         return msg.slice(0, load<usize>(buf) as i32);
+    }
+}
+
+export class Auth {
+    state: crypto.symmetric_state;
+
+    protected constructor(state: crypto.symmetric_state) {
+        this.state = state;
+    }
+
+    static new(alg: string, key: SymmetricKey): Auth | null {
+        let wasiAlg = new crypto.WasiString(alg);
+        if ((error.last = crypto.symmetric_state_open(wasiAlg.ptr, wasiAlg.length, crypto.opt_symmetric_key.some(key.handle), crypto.opt_options.none(), buf))) {
+            return null;
+        }
+        let state = load<crypto.symmetric_state>(buf);
+        return new Auth(state);
+    }
+
+    absorb(msg: ArrayBuffer): bool {
+        if ((error.last = crypto.symmetric_state_absorb(this.state, changetype<usize>(msg), msg.byteLength))) {
+            return false;
+        }
+        return true;
+    }
+
+    tag(): ArrayBuffer | null {
+        if ((error.last = crypto.symmetric_state_squeeze_tag(this.state, buf))) {
+            return null;
+        }
+        let tag = load<crypto.symmetric_tag>(buf);
+        crypto.symmetric_tag_len(tag, buf);
+        let rawTag = new ArrayBuffer(load<usize>(buf) as i32);
+        crypto.symmetric_tag_pull(tag, changetype<ptr<u8>>(rawTag), rawTag.byteLength, buf);
+        return rawTag;
+    }
+
+    verify(rawTag: ArrayBuffer): bool {
+        if ((error.last = crypto.symmetric_state_squeeze_tag(this.state, buf))) {
+            return false;
+        }
+        let tag = load<crypto.symmetric_tag>(buf);
+        if ((error.last = crypto.symmetric_tag_verify(tag, changetype<ptr<u8>>(rawTag), rawTag.byteLength))) {
+            return false;
+        }
+        return true;
+    }
+
+    static auth(msg: ArrayBuffer, key: SymmetricKey): ArrayBuffer | null {
+        let st = Auth.new(key.alg, key);
+        if (!st) {
+            return null;
+        }
+        if (!st.absorb(msg)) {
+            return null;
+        }
+        return st.tag();
+    }
+
+    static verify(msg: ArrayBuffer, key: SymmetricKey, rawTag: ArrayBuffer): bool {
+        let st = Auth.new(key.alg, key);
+        if (!st) {
+            return false;
+        }
+        if (!st.absorb(msg)) {
+            return false;
+        }
+        return st.verify(rawTag);
     }
 }

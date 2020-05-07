@@ -1,5 +1,5 @@
 import { Console, Random } from "as-wasi";
-import { Hash, SymmetricKey, Aead } from "./crypto";
+import { Auth, Hash, SymmetricKey, Aead } from "./crypto";
 
 let msgStr = "test";
 let msg = String.UTF8.encode("test", false);
@@ -10,7 +10,7 @@ Random.randomFill(nonce);
 
 Console.log("\n--- Hashing");
 Console.log("\nHash(" + msgStr + ")");
-let h = Hash.digest("SHA-256", msg, 32)!;
+let h = Hash.hash("SHA-256", msg, 32)!;
 Console.log(Uint8Array.wrap(h).toString());
 
 Console.log("\n--- Encryption");
@@ -44,3 +44,14 @@ aead = Aead.new(key, nonce, ad)!;
 decrypted = aead.decryptDetached(ciphertextAndTag)!;
 Console.log("\nDecryptDetached(ct, tag, ad = " + adStr + "): ");
 Console.log(String.UTF8.decode(decrypted));
+
+Console.log("\n--- Authentication");
+key = SymmetricKey.generate("HMAC/SHA-256")!;
+let tag = Auth.auth(msg, key)!;
+Console.log("\nHMAC/SHA-256(" + msgStr + "):");
+Console.log(Uint8Array.wrap(tag).toString());
+
+Console.log("Verifies:")
+let verified = Auth.verify(msg, key, tag);
+Console.log(verified.toString());
+
