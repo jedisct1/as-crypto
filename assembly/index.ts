@@ -32,4 +32,15 @@ let decrypted = aead.decrypt(ciphertext)!;
 Console.log("\nDecrypt(ct, ad=" + adStr + "):");
 Console.log(String.UTF8.decode(decrypted));
 
+aead = Aead.new(key, nonce, ad)!;
+let ciphertextAndTag = aead.encryptDetached(msg)!;
+Console.log("\nEncryptDetached(msg=" + msgStr + ", ad=" + adStr + "):");
+Console.log("Ciphertext:");
+Console.log(Uint8Array.wrap(ciphertextAndTag.ciphertext).toString());
+Console.log("Raw tag:");
+Console.log(Uint8Array.wrap(ciphertextAndTag.rawTag).toString());
 
+aead = Aead.new(key, nonce, ad)!;
+decrypted = aead.decryptDetached(ciphertextAndTag)!;
+Console.log("\nDecryptDetached(ct, tag, ad = " + adStr + "): ");
+Console.log(String.UTF8.decode(decrypted));

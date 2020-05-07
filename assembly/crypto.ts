@@ -100,6 +100,16 @@ export class Hash {
     }
 }
 
+export class CiphertextAndTag {
+    ciphertext: ArrayBuffer;
+    rawTag: ArrayBuffer;
+
+    constructor(ciphertext: ArrayBuffer, rawTag: ArrayBuffer) {
+        this.ciphertext = ciphertext;
+        this.rawTag = rawTag;
+    }
+}
+
 export class Aead {
     state: crypto.symmetric_state;
 
@@ -148,5 +158,25 @@ export class Aead {
             return null;
         }
         return out.slice(0, load<usize>(buf) as i32);
+    }
+
+    encryptDetached(msg: ArrayBuffer): CiphertextAndTag | null {
+        let ciphertext = new ArrayBuffer(msg.byteLength);
+        if ((crypto.symmetric_state_encrypt_detached(this.state, changetype<ptr<u8>>(ciphertext), ciphertext.byteLength, changetype<ptr<u8>>(msg), msg.byteLength, buf))) {
+            return null;
+        }
+        let tag = load<crypto.symmetric_tag>(buf);
+        crypto.symmetric_tag_len(tag, buf);
+        let rawTag = new ArrayBuffer(load<usize>(buf) as i32);
+        crypto.symmetric_tag_pull(tag, changetype<ptr<u8>>(rawTag), rawTag.byteLength, buf);
+        return new CiphertextAndTag(ciphertext, rawTag);
+    }
+
+    decryptDetached(ciphertextAndTag: CiphertextAndTag): ArrayBuffer | null {
+        let msg = new ArrayBuffer(ciphertextAndTag.ciphertext.byteLength);
+        if ((crypto.symmetric_state_decrypt_detached(this.state, changetype<ptr<u8>>(msg), msg.byteLength, changetype<ptr<u8>>(ciphertextAndTag.ciphertext), ciphertextAndTag.ciphertext.byteLength, changetype<ptr<u8>>(ciphertextAndTag.rawTag), ciphertextAndTag.rawTag.byteLength, buf))) {
+            return null;
+        }
+        return msg.slice(0, load<usize>(buf) as i32);
     }
 }
