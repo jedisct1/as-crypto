@@ -20,7 +20,7 @@ export class SymmetricKey {
     handle: crypto.symmetric_key;
     alg: string;
 
-    protected constructor(handle: crypto.symmetric_key, alg: string) {
+    constructor(handle: crypto.symmetric_key, alg: string) {
         this.handle = handle;
         this.alg = alg;
     }
@@ -88,7 +88,6 @@ export class Hash {
     }
 
     squeeze(outLen: usize): ArrayBuffer | null {
-        // @ts-ignore: abstract
         let out = new ArrayBuffer(outLen as i32);
         if ((error.last = crypto.symmetric_state_squeeze(this.state, changetype<usize>(out), outLen))) {
             return null;
@@ -254,5 +253,43 @@ export class Auth {
             return false;
         }
         return st.verify(rawTag);
+    }
+}
+
+export class Hkdf {
+    static extract(prkAlg: string, key: SymmetricKey, salt: ArrayBuffer | null = null): SymmetricKey | null {
+        let wasiAlg = new crypto.WasiString(key.alg);
+        if ((error.last = crypto.symmetric_state_open(wasiAlg.ptr, wasiAlg.length, crypto.opt_symmetric_key.some(key.handle), crypto.opt_options.none(), buf))) {
+            return null;
+        }
+        let state = load<crypto.symmetric_state>(buf);
+        if (salt) {
+            if ((error.last = crypto.symmetric_state_absorb(state, changetype<ptr<u8>>(salt), salt.byteLength))) {
+                return null;
+            }
+        }
+        let wasiPrkAlg = new crypto.WasiString(prkAlg);
+        if ((error.last = crypto.symmetric_state_squeeze_key(state, wasiPrkAlg.ptr, wasiPrkAlg.length, buf))) {
+            return null;
+        }
+        crypto.symmetric_state_close(state);
+        return new SymmetricKey(load<crypto.symmetric_key>(buf), prkAlg);
+    }
+
+    static expand(prk: SymmetricKey, info: ArrayBuffer, outLen: usize): ArrayBuffer | null {
+        let wasiAlg = new crypto.WasiString(prk.alg);
+        if ((error.last = crypto.symmetric_state_open(wasiAlg.ptr, wasiAlg.length, crypto.opt_symmetric_key.some(prk.handle), crypto.opt_options.none(), buf))) {
+            return null;
+        }
+        let state = load<crypto.symmetric_state>(buf);
+        if ((error.last = crypto.symmetric_state_absorb(state, changetype<ptr<u8>>(info), info.byteLength))) {
+            return null;
+        }
+        let out = new ArrayBuffer(outLen as i32);
+        if ((error.last = crypto.symmetric_state_squeeze(state, changetype<usize>(out), outLen))) {
+            return null;
+        }
+        crypto.symmetric_state_close(state);
+        return out;
     }
 }

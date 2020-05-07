@@ -1,10 +1,14 @@
 import { Console, Random } from "as-wasi";
-import { Auth, Hash, SymmetricKey, Aead } from "./crypto";
+import { Auth, Hash, Hkdf, SymmetricKey, Aead } from "./crypto";
 
 let msgStr = "test";
 let msg = String.UTF8.encode("test", false);
 let adStr = "additional data";
 let ad = String.UTF8.encode(adStr, false);
+let saltStr = "salt";
+let salt = String.UTF8.encode(saltStr, false);
+let infoStr = "salt";
+let info = String.UTF8.encode(infoStr, false);
 let nonce = new ArrayBuffer(12);
 Random.randomFill(nonce);
 
@@ -61,6 +65,14 @@ decrypted = aead.decryptDetached(ciphertextAndTag)!;
 Console.log("\nDecryptDetached(ct, tag, ad = " + adStr + "): ");
 Console.log(String.UTF8.decode(decrypted));
 
+// --- HKDF
+
+Console.log("\n--- HKDF");
+key = SymmetricKey.generate("HKDF-EXTRACT/SHA-512")!;
+let prk = Hkdf.extract("HKDF-EXPAND/SHA-512", key, salt)!;
+let derivedKey = Hkdf.expand(prk, info, 32)!;
+Console.log(Uint8Array.wrap(derivedKey).toString());
+
 // --- Authentication
 
 Console.log("\n--- Authentication");
@@ -72,4 +84,3 @@ Console.log(Uint8Array.wrap(tag).toString());
 Console.log("Verifies:")
 let verified = Auth.verify(msg, key, tag);
 Console.log(verified.toString());
-
