@@ -1,5 +1,5 @@
 import { Console, Random } from "as-wasi";
-import { Auth, Hash, Hkdf, SymmetricKey, Aead } from "./crypto";
+import { Auth, Hash, Hkdf, SymmetricKey, Aead, Signature, SignatureKeyPair } from "./crypto";
 
 let msgStr = "test";
 let msg = String.UTF8.encode("test", false);
@@ -33,7 +33,7 @@ Console.log(Uint8Array.wrap(h).toString());
 
 Console.log("\n--- Encryption");
 key = SymmetricKey.generate("AES-256-GCM")!;
-let rawKey = key.export()!;
+let rawKey = key.raw()!;
 Console.log("\nGenerated AES key:");
 Console.log(Uint8Array.wrap(rawKey).toString());
 
@@ -84,4 +84,17 @@ Console.log(Uint8Array.wrap(tag).toString());
 
 Console.log("\nVerifies:")
 let verified = Auth.verify(msg, key, tag);
+Console.log(verified.toString());
+
+// --- Signature
+
+Console.log("\n--- Signature");
+let keypair = SignatureKeyPair.generate("Ed25519")!;
+let signature = keypair.sign(msg)!
+Console.log("\nEd25519(" + msgStr + "):");
+Console.log(Uint8Array.wrap(signature.raw()!).toString());
+
+let publicKey = keypair.publicKey()!;
+verified = publicKey.verify(msg, signature);
+Console.log("\nSignature verification:");
 Console.log(verified.toString());

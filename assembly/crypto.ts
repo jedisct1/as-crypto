@@ -27,7 +27,7 @@ export class SymmetricKey {
 
     static generate(alg: string): SymmetricKey | null {
         let wasiAlg = new crypto.WasiString(alg);
-        if (crypto.symmetric_key_generate(wasiAlg.ptr, wasiAlg.length, crypto.opt_options.none(), buf)) {
+        if ((error.last = crypto.symmetric_key_generate(wasiAlg.ptr, wasiAlg.length, crypto.opt_options.none(), buf))) {
             return null;
         }
         return new SymmetricKey(load<crypto.symmetric_key>(buf), alg);
@@ -41,8 +41,8 @@ export class SymmetricKey {
         return new SymmetricKey(load<crypto.handle>(buf), alg);
     }
 
-    export(): ArrayBuffer | null {
-        if (crypto.symmetric_key_export(this.handle, buf)) {
+    raw(): ArrayBuffer | null {
+        if ((error.last = crypto.symmetric_key_export(this.handle, buf))) {
             return null;
         }
         let raw = load<crypto.symmetric_tag>(buf);
@@ -291,5 +291,130 @@ export class Hkdf {
         }
         crypto.symmetric_state_close(state);
         return out;
+    }
+}
+
+export class Signature {
+    handle: crypto.signature;
+
+    constructor(handle: crypto.signature) {
+        this.handle = handle;
+    }
+
+    protected as(encoding: crypto.signature_encoding): ArrayBuffer | null {
+        if ((error.last = crypto.signature_export(this.handle, encoding, buf))) {
+            return null;
+        }
+        let raw = load<crypto.symmetric_tag>(buf);
+        if ((error.last = crypto.array_output_len(raw, buf))) {
+            return null;
+        }
+        let out = new ArrayBuffer(load<usize>(buf) as i32);
+        crypto.array_output_pull(raw, changetype<ptr<u8>>(out), out.byteLength, buf);
+        return out;
+    }
+
+    raw(): ArrayBuffer | null {
+        return this.as(crypto.signature_encoding.RAW);
+    }
+
+    der(): ArrayBuffer | null {
+        return this.as(crypto.signature_encoding.DER);
+    }
+}
+
+export class SignaturePublicKey {
+    handle: crypto.signature_publickey
+
+    constructor(handle: crypto.signature_publickey) {
+        this.handle = handle;
+    }
+
+    protected as(encoding: crypto.publickey_encoding): ArrayBuffer | null {
+        if ((error.last = crypto.signature_publickey_export(this.handle, buf, encoding))) {
+            return null;
+        }
+        let raw = load<crypto.symmetric_tag>(buf);
+        if ((error.last = crypto.array_output_len(raw, buf))) {
+            return null;
+        }
+        let out = new ArrayBuffer(load<usize>(buf) as i32);
+        crypto.array_output_pull(raw, changetype<ptr<u8>>(out), out.byteLength, buf);
+        return out;
+    }
+
+    raw(): ArrayBuffer | null {
+        return this.as(crypto.publickey_encoding.RAW);
+    }
+
+    verify(msg: ArrayBuffer, signature: Signature): bool {
+        if ((error.last = crypto.signature_verification_state_open(this.handle, buf))) {
+            return false
+        }
+        let state = load<crypto.signature_verification_state>(buf);
+        if ((error.last = crypto.signature_verification_state_update(state, changetype<ptr<u8>>(msg), msg.byteLength))) {
+            return false;
+        }
+        error.last = crypto.signature_verification_state_verify(state, signature.handle);
+        crypto.signature_verification_state_close(state);
+        return error.last === 0;
+    }
+}
+
+export class SignatureKeyPair {
+    handle: crypto.signature_keypair;
+    alg: string;
+
+    constructor(handle: crypto.signature_keypair, alg: string) {
+        this.handle = handle;
+        this.alg = alg;
+    }
+
+    static generate(alg: string): SignatureKeyPair | null {
+        let wasiAlg = new crypto.WasiString(alg);
+        if ((error.last = crypto.signature_keypair_generate(wasiAlg.ptr, wasiAlg.length, crypto.opt_options.none(), buf))) {
+            return null;
+        }
+        return new SignatureKeyPair(load<crypto.signature_keypair>(buf), alg);
+    }
+
+    publicKey(): SignaturePublicKey | null {
+        if ((error.last = crypto.signature_keypair_publickey(this.handle, buf))) {
+            return null;
+        }
+        return new SignaturePublicKey(load<crypto.signature_publickey>(buf));
+    }
+
+    sign(msg: ArrayBuffer): Signature | null {
+        if ((error.last = crypto.signature_state_open(this.handle, buf))) {
+            return null
+        }
+        let state = load<crypto.signature_state>(buf);
+        if ((error.last = crypto.signature_state_update(state, changetype<ptr<u8>>(msg), msg.byteLength))) {
+            return null;
+        }
+        if ((error.last = crypto.signature_state_sign(state, buf))) {
+            return null;
+        }
+        crypto.signature_state_close(state);
+        return new Signature(load<crypto.signature>(buf));
+    }
+
+
+    protected as(encoding: crypto.keypair_encoding): ArrayBuffer | null {
+        if ((error.last = crypto.signature_keypair_export(this.handle, buf, encoding))) {
+            return null;
+        }
+        let raw = load<crypto.symmetric_tag>(buf);
+        if ((error.last = crypto.array_output_len(raw, buf))) {
+            return null;
+        }
+        let out = new ArrayBuffer(load<usize>(buf) as i32);
+        crypto.array_output_pull(raw, changetype<ptr<u8>>(out), out.byteLength, buf);
+        return out;
+    }
+
+    raw(): ArrayBuffer | null {
+        return this.as(crypto.publickey_encoding.RAW);
     }
 }
