@@ -1,5 +1,5 @@
 import { Console, Random } from "as-wasi";
-import { Auth, Hash, Hkdf, SymmetricKey, Aead, Signature, SignatureKeyPair } from "./crypto";
+import { Auth, Hash, Hkdf, SymmetricKey, Aead, SignatureKeyPair } from "./crypto";
 
 let msgStr = "test";
 let msg = String.UTF8.encode("test", false);
@@ -86,9 +86,9 @@ Console.log("\nVerifies:")
 let verified = Auth.verify(msg, key, tag);
 Console.log(verified.toString());
 
-// --- Signature
+// --- EdDSA Signatures
 
-Console.log("\n--- Signature");
+Console.log("\n--- EdDSA ignatures");
 let keypair = SignatureKeyPair.generate("Ed25519")!;
 let signature = keypair.sign(msg)!
 Console.log("\nEd25519(" + msgStr + "):");
@@ -98,3 +98,17 @@ let publicKey = keypair.publicKey()!;
 verified = publicKey.verify(msg, signature);
 Console.log("\nSignature verification:");
 Console.log(verified.toString());
+
+// --- ECDSA signatures
+
+Console.log("\n--- ECDSA signatures");
+keypair = SignatureKeyPair.generate("ECDSA_P256_SHA256")!;
+
+let encodedKeypair = keypair.pkcs8()!;
+Console.log("\nPKCS8-encoded ECDSA keypair:");
+Console.log(Uint8Array.wrap(encodedKeypair).toString());
+
+publicKey = keypair.publicKey()!;
+let encodedPublicKey = publicKey.raw()!;
+Console.log("\nRaw ECDSA public key:");
+Console.log(Uint8Array.wrap(encodedPublicKey).toString());
