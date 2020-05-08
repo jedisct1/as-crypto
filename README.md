@@ -9,3 +9,5 @@ The purpose of these bindings is to evaluate the usability of the API in the con
 It also provides a test bed for the AssemblyScript [witx code generator](https://github.com/jedisct1/as-witx/).
 
 Executing the resulting WebAssembly file requires [a version of `wasmtime` that includes the crypto modules](https://github.com/jedisct1/wasmtime-crypto).
+
+If you were looking for a crypto library written in AssemblyScript, check out [wasm-crypto](https://github.com/jedisct1/wasm-crypto) instead.
