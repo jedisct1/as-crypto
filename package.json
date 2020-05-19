@@ -1,15 +1,15 @@
 {
   "scripts": {
-    "asbuild:untouched": "asc assembly/index.ts -b build/untouched.wasm -t build/untouched.wat --validate --sourceMap --debug --use abort=wasi_abort --explicitStart --runtime none",
-    "asbuild:optimized": "asc assembly/index.ts -b build/optimized.wasm -t build/optimized.wat --validate --sourceMap --optimize",
+    "asbuild:untouched": "asc assembly/index.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --debug --use abort=wasi_abort --explicitStart --runtime none",
+    "asbuild:optimized": "asc assembly/index.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap --optimize",
     "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized",
     "test": "node tests"
   },
   "dependencies": {
-    "@assemblyscript/loader": "^0.9.4"
+    "@assemblyscript/loader": "^0.10"
   },
   "devDependencies": {
     "as-wasi": "0.0.1",
-    "assemblyscript": "^0.9.4"
+    "assemblyscript": "^0.10"
   }
 }
