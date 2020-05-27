@@ -1,5 +1,6 @@
 import * as crypto from "./wasi_crypto";
 import { error, buf, ptr, fromWasiArray } from "./common";
+import { KeyPair, PublicKey } from "./asymmetric_common";
 
 export class Signature {
     handle: crypto.signature;
@@ -40,68 +41,7 @@ export class Signature {
     }
 }
 
-export class SignaturePublicKey {
-    handle: crypto.signature_publickey
-
-    constructor(handle: crypto.signature_publickey) {
-        this.handle = handle;
-    }
-
-    protected as(encoding: crypto.publickey_encoding): ArrayBuffer | null {
-        if ((error.last = crypto.signature_publickey_export(this.handle, encoding, buf))) {
-            return null;
-        }
-        return fromWasiArray(load<crypto.symmetric_tag>(buf));
-    }
-
-    raw(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.RAW);
-    }
-
-    der(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.DER);
-    }
-
-    pem(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.PEM);
-    }
-
-    sec(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.SEC);
-    }
-
-    compressedSec(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.COMPRESSED_SEC);
-    }
-
-    protected static from(alg: string, encoded: ArrayBuffer, encoding: crypto.publickey_encoding): SignaturePublicKey | null {
-        let wasiAlg = new crypto.WasiString(alg);
-        if ((error.last = crypto.signature_publickey_import(wasiAlg.ptr, wasiAlg.length, changetype<ptr<u8>>(encoded), encoded.byteLength, encoding, buf))) {
-            return null;
-        }
-        return new SignaturePublicKey(load<crypto.handle>(buf));
-    }
-
-    static fromRaw(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
-        return this.from(alg, encoded, crypto.publickey_encoding.RAW);
-    }
-
-    static fromDer(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
-        return this.from(alg, encoded, crypto.publickey_encoding.DER);
-    }
-
-    static fromPem(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
-        return this.from(alg, encoded, crypto.publickey_encoding.PEM);
-    }
-
-    static fromSec(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
-        return this.from(alg, encoded, crypto.publickey_encoding.SEC);
-    }
-
-    static fromCompressedSec(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
-        return this.from(alg, encoded, crypto.publickey_encoding.COMPRESSED_SEC);
-    }
-
+export class SignaturePublicKey extends PublicKey {
     verify(msg: ArrayBuffer, signature: Signature): bool {
         if ((error.last = crypto.signature_verification_state_open(this.handle, buf))) {
             return false
@@ -114,30 +54,51 @@ export class SignaturePublicKey {
         crypto.signature_verification_state_close(state);
         return error.last === 0;
     }
-}
 
-export class SignatureKeyPair {
-    handle: crypto.signature_keypair;
-    alg: string;
-
-    constructor(handle: crypto.signature_keypair, alg: string) {
-        this.handle = handle;
-        this.alg = alg;
+    static fromRaw(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
+        return changetype<SignaturePublicKey | null>(super.fromRaw(alg, encoded))
     }
 
+    static fromDer(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
+        return changetype<SignaturePublicKey | null>(super.fromDer(alg, encoded))
+    }
+
+    static fromPem(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
+        return changetype<SignaturePublicKey | null>(super.fromPem(alg, encoded))
+    }
+
+    static fromSec(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
+        return changetype<SignaturePublicKey | null>(super.fromSec(alg, encoded))
+    }
+
+    static fromCompressedSec(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
+        return changetype<SignaturePublicKey | null>(super.fromCompressedSec(alg, encoded))
+    }
+}
+
+export class SignatureKeyPair extends KeyPair {
     static generate(alg: string): SignatureKeyPair | null {
-        let wasiAlg = new crypto.WasiString(alg);
-        if ((error.last = crypto.signature_keypair_generate(wasiAlg.ptr, wasiAlg.length, crypto.opt_options.none(), buf))) {
-            return null;
-        }
-        return new SignatureKeyPair(load<crypto.signature_keypair>(buf), alg);
+        return changetype<SignatureKeyPair | null>(KeyPair.generate(alg));
     }
 
     publicKey(): SignaturePublicKey | null {
-        if ((error.last = crypto.signature_keypair_publickey(this.handle, buf))) {
-            return null;
-        }
-        return new SignaturePublicKey(load<crypto.signature_publickey>(buf));
+        return changetype<SignaturePublicKey | null>(super.publicKey())
+    }
+
+    static fromRaw(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
+        return changetype<SignatureKeyPair | null>(super.fromRaw(alg, encoded))
+    }
+
+    static fromPkcs8(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
+        return changetype<SignatureKeyPair | null>(super.fromPkcs8(alg, encoded))
+    }
+
+    static fromPem(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
+        return changetype<SignatureKeyPair | null>(super.fromPem(alg, encoded))
+    }
+
+    static fromDer(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
+        return changetype<SignatureKeyPair | null>(super.fromDer(alg, encoded))
     }
 
     sign(msg: ArrayBuffer): Signature | null {
@@ -153,52 +114,5 @@ export class SignatureKeyPair {
         }
         crypto.signature_state_close(state);
         return new Signature(load<crypto.signature>(buf));
-    }
-
-    protected as(encoding: crypto.keypair_encoding): ArrayBuffer | null {
-        if ((error.last = crypto.signature_keypair_export(this.handle, encoding, buf))) {
-            return null;
-        }
-        return fromWasiArray(load<crypto.symmetric_tag>(buf));
-    }
-
-    raw(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.RAW);
-    }
-
-    pkcs8(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.PKCS8);
-    }
-
-    der(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.DER);
-    }
-
-    pem(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.PEM);
-    }
-
-    protected static from(alg: string, encoded: ArrayBuffer, encoding: crypto.keypair_encoding): SignatureKeyPair | null {
-        let wasiAlg = new crypto.WasiString(alg);
-        if ((error.last = crypto.signature_keypair_import(wasiAlg.ptr, wasiAlg.length, changetype<ptr<u8>>(encoded), encoded.byteLength, encoding, buf))) {
-            return null;
-        }
-        return new SignatureKeyPair(load<crypto.handle>(buf), alg);
-    }
-
-    static fromRaw(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
-        return this.from(alg, encoded, crypto.keypair_encoding.RAW);
-    }
-
-    static fromPkcs8(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
-        return this.from(alg, encoded, crypto.keypair_encoding.PKCS8);
-    }
-
-    static fromPem(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
-        return this.from(alg, encoded, crypto.keypair_encoding.PEM);
-    }
-
-    static fromDer(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
-        return this.from(alg, encoded, crypto.keypair_encoding.DER);
     }
 }

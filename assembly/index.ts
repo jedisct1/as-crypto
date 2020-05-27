@@ -1,5 +1,5 @@
 import { Console, Random } from "as-wasi";
-import { Auth, Hash, Hkdf, SymmetricKey, Aead, SignatureKeyPair } from "./crypto";
+import { Auth, Hash, Hkdf, SymmetricKey, Aead, SignatureKeyPair, SignaturePublicKey } from "./crypto";
 
 let msgStr = "test";
 let msg = String.UTF8.encode("test", false);
@@ -88,7 +88,7 @@ Console.log(verified.toString());
 
 // --- EdDSA Signatures
 
-Console.log("\n--- EdDSA ignatures");
+Console.log("\n--- EdDSA signatures");
 let keypair = SignatureKeyPair.generate("Ed25519")!;
 let signature = keypair.sign(msg)!
 Console.log("\nEd25519(" + msgStr + "):");

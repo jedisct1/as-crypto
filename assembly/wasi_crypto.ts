@@ -216,7 +216,7 @@ export namespace crypto_errno {
     /**
      * A key or key pair matching the requested identifier cannot be found using the supplied information.
      * 
-     * This error is returned by a key manager via the `signature_keypair_from_id()` function.
+     * This error is returned by a key manager via the `keypair_from_id()` function.
      */
     export const KEY_NOT_FOUND: crypto_errno = 25;
 
@@ -389,9 +389,9 @@ export type options = handle;
 export type key_manager = handle;
 
 /**
- * A key pair for signatures.
+ * A key pair.
  */
-export type signature_keypair = handle;
+export type keypair = handle;
 
 /**
  * A state to absorb data to be signed.
@@ -410,7 +410,7 @@ export type signature = handle;
 /**
  * A public key that can be used to verify a signature.
  */
-export type signature_publickey = handle;
+export type publickey = handle;
 
 /**
  * A state to absorb signed data to be verified.
@@ -825,9 +825,9 @@ export declare function key_manager_invalidate(
 ): crypto_errno /* error */;
 
 
-// ----------------------[wasi_ephemeral_crypto_signatures]----------------------
+// ----------------------[wasi_ephemeral_crypto_asymmetric_common]----------------------
 /**
- * Generate a new key pair for signatures.
+ * Generate a new key pair.
  * 
  * Internally, a key pair stores the supplied algorithm and optional parameters.
  * 
@@ -843,7 +843,7 @@ export declare function key_manager_invalidate(
  * Example usage:
  * 
  * ```rust
- * let kp_handle = ctx.signature_keypair_generate("RSA_PKCS1_2048_8192_SHA512", None)?;
+ * let kp_handle = ctx.keypair_generate("RSA_PKCS1_2048_8192_SHA512", None)?;
  * ```
  */
 /**
@@ -851,16 +851,16 @@ export declare function key_manager_invalidate(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_keypair_generate")
-export declare function signature_keypair_generate(
+@external("wasi_ephemeral_crypto", "keypair_generate")
+export declare function keypair_generate(
     algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
-    handle_ptr: mut_ptr<signature_keypair>
+    handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
 /**
- * Import a key pair for signatures.
+ * Import a key pair.
  * 
- * This function creates a `signature_keypair` object from existing material.
+ * This function creates a `keypair` object from existing material.
  * 
  * It may return `unsupported_algorithm` if the encoding scheme is not supported, or `invalid_key` if the key cannot be decoded.
  * 
@@ -869,7 +869,7 @@ export declare function signature_keypair_generate(
  * Example usage:
  * 
  * ```rust
- * let kp_handle = ctx.signature_keypair_import("RSA_PKCS1_2048_8192_SHA512", KeypairEncoding::PKCS8)?;
+ * let kp_handle = ctx.keypair_import("RSA_PKCS1_2048_8192_SHA512", KeypairEncoding::PKCS8)?;
  * ```
  */
 /**
@@ -877,10 +877,10 @@ export declare function signature_keypair_generate(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_keypair_import")
-export declare function signature_keypair_import(
+@external("wasi_ephemeral_crypto", "keypair_import")
+export declare function keypair_import(
     algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: keypair_encoding,
-    handle_ptr: mut_ptr<signature_keypair>
+    handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
 /**
@@ -903,15 +903,15 @@ export declare function signature_keypair_import(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_managed_keypair_generate")
-export declare function signature_managed_keypair_generate(
+@external("wasi_ephemeral_crypto", "keypair_generate_managed")
+export declare function keypair_generate_managed(
     key_manager: key_manager, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
-    handle_ptr: mut_ptr<signature_keypair>
+    handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
 /**
  * __(optional)__
- * Return the key pair identifier and version of a managed signature key pair.
+ * Return the key pair identifier and version of a managed key pair.
  * 
  * If the key pair is not managed, `unsupported_feature` is returned instead.
  * 
@@ -922,15 +922,15 @@ export declare function signature_managed_keypair_generate(
  * out: error, kp_id_len, version
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_keypair_id")
-export declare function signature_keypair_id(
-    kp: signature_keypair, kp_id: mut_ptr<u8>, kp_id_max_len: size,
+@external("wasi_ephemeral_crypto", "keypair_id")
+export declare function keypair_id(
+    kp: keypair, kp_id: mut_ptr<u8>, kp_id_max_len: size,
     kp_id_len_ptr: mut_ptr<size>, version_ptr: mut_ptr<version>
 ): crypto_errno /* error */;
 
 /**
  * __(optional)__
- * Return a managed signature key pair from a key identifier.
+ * Return a managed key pair from a key identifier.
  * 
  * `kp_version` can be set to `version_latest` to retrieve the most recent version of a key pair.
  * 
@@ -944,14 +944,14 @@ export declare function signature_keypair_id(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_keypair_from_id")
-export declare function signature_keypair_from_id(
+@external("wasi_ephemeral_crypto", "keypair_from_id")
+export declare function keypair_from_id(
     key_manager: key_manager, kp_id: ptr<u8>, kp_id_len: size, kp_version: version,
-    handle_ptr: mut_ptr<signature_keypair>
+    handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
 /**
- * Export a signature key pair as the given encoding format.
+ * Export a key pair as the given encoding format.
  * 
  * May return `prohibited_operation` if this operation is denied or `unsupported_encoding` if the encoding is not supported.
  */
@@ -960,30 +960,28 @@ export declare function signature_keypair_from_id(
  * out: error, encoded
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_keypair_export")
-export declare function signature_keypair_export(
-    kp: signature_keypair, encoding: keypair_encoding,
+@external("wasi_ephemeral_crypto", "keypair_export")
+export declare function keypair_export(
+    kp: keypair, encoding: keypair_encoding,
     encoded_ptr: mut_ptr<array_output>
 ): crypto_errno /* error */;
 
 /**
- * Get a public key of a signature key pair.
- * 
- * The returned object can be used to verify signatures.
+ * Get a public key of a key pair.
  */
 /**
  * in:  kp
  * out: error, pk
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_keypair_publickey")
-export declare function signature_keypair_publickey(
-    kp: signature_keypair,
-    pk_ptr: mut_ptr<signature_publickey>
+@external("wasi_ephemeral_crypto", "keypair_publickey")
+export declare function keypair_publickey(
+    kp: keypair,
+    pk_ptr: mut_ptr<publickey>
 ): crypto_errno /* error */;
 
 /**
- * Destroys a signature key pair.
+ * Destroys a key pair.
  * 
  * The host will automatically wipe traces of the secret key from memory.
  * 
@@ -994,15 +992,13 @@ export declare function signature_keypair_publickey(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_keypair_close")
-export declare function signature_keypair_close(
-    kp: signature_keypair
+@external("wasi_ephemeral_crypto", "keypair_close")
+export declare function keypair_close(
+    kp: keypair
 ): crypto_errno /* error */;
 
 /**
- * Import a signature public key.
- * 
- * The returned object can be used to verify signatures.
+ * Import a public key.
  * 
  * The function may return `unsupported_encoding` if importing from the given format is not implemented or incompatible with the key type.
  * 
@@ -1013,7 +1009,7 @@ export declare function signature_keypair_close(
  * Example usage:
  * 
  * ```rust
- * let pk_handle = ctx.signature_publickey_import(encoded, PublicKeyEncoding::Sec)?;
+ * let pk_handle = ctx.publickey_import(encoded, PublicKeyEncoding::Sec)?;
  * ```
  */
 /**
@@ -1021,10 +1017,10 @@ export declare function signature_keypair_close(
  * out: error, pk
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_publickey_import")
-export declare function signature_publickey_import(
+@external("wasi_ephemeral_crypto", "publickey_import")
+export declare function publickey_import(
     algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: publickey_encoding,
-    pk_ptr: mut_ptr<signature_publickey>
+    pk_ptr: mut_ptr<publickey>
 ): crypto_errno /* error */;
 
 /**
@@ -1037,14 +1033,14 @@ export declare function signature_publickey_import(
  * out: error, encoded
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_publickey_export")
-export declare function signature_publickey_export(
-    pk: signature_publickey, encoding: publickey_encoding,
+@external("wasi_ephemeral_crypto", "publickey_export")
+export declare function publickey_export(
+    pk: publickey, encoding: publickey_encoding,
     encoded_ptr: mut_ptr<array_output>
 ): crypto_errno /* error */;
 
 /**
- * Check that a signature public key is valid and in canonical form.
+ * Check that a public key is valid and in canonical form.
  * 
  * This function may perform stricter checks than those made during importation at the expense of additional CPU cycles.
  * 
@@ -1055,9 +1051,9 @@ export declare function signature_publickey_export(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_publickey_verify")
-export declare function signature_publickey_verify(
-    pk: signature_publickey
+@external("wasi_ephemeral_crypto", "publickey_verify")
+export declare function publickey_verify(
+    pk: publickey
 ): crypto_errno /* error */;
 
 /**
@@ -1070,11 +1066,13 @@ export declare function signature_publickey_verify(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_publickey_close")
-export declare function signature_publickey_close(
-    pk: signature_publickey
+@external("wasi_ephemeral_crypto", "publickey_close")
+export declare function publickey_close(
+    pk: publickey
 ): crypto_errno /* error */;
 
+
+// ----------------------[wasi_ephemeral_crypto_signatures]----------------------
 /**
  * Export a signature.
  * 
@@ -1129,7 +1127,7 @@ export declare function signature_import(
  * Example usage - signature creation
  * 
  * ```rust
- * let kp_handle = ctx.signature_keypair_import("Ed25519ph", keypair, KeypairEncoding::Raw)?;
+ * let kp_handle = ctx.keypair_import("Ed25519ph", keypair, KeypairEncoding::Raw)?;
  * let state_handle = ctx.signature_state_open(kp_handle)?;
  * ctx.signature_state_update(state_handle, b"message part 1")?;
  * ctx.signature_state_update(state_handle, b"message part 2")?;
@@ -1144,7 +1142,7 @@ export declare function signature_import(
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "signature_state_open")
 export declare function signature_state_open(
-    kp: signature_keypair,
+    kp: keypair,
     state_ptr: mut_ptr<signature_state>
 ): crypto_errno /* error */;
 
@@ -1206,7 +1204,7 @@ export declare function signature_state_close(
  * Example usage - signature verification:
  * 
  * ```rust
- * let pk_handle = ctx.signature_publickey_import("ECDSA_P256_SHA256", encoded_pk PublicKeyEncoding::CompressedSec)?;
+ * let pk_handle = ctx.publickey_import("ECDSA_P256_SHA256", encoded_pk, PublicKeyEncoding::CompressedSec)?;
  * let signature_handle = ctx.signature_import("ECDSA_P256_SHA256", encoded_sig, PublicKeyEncoding::Der)?;
  * let state_handle = ctx.signature_verification_state_open(pk_handle)?;
  * ctx.signature_verification_state_update(state_handle, "message")?;
@@ -1220,7 +1218,7 @@ export declare function signature_state_close(
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "signature_verification_state_open")
 export declare function signature_verification_state_open(
-    kp: signature_publickey,
+    kp: publickey,
     state_ptr: mut_ptr<signature_verification_state>
 ): crypto_errno /* error */;
 
@@ -1379,8 +1377,8 @@ export declare function symmetric_key_close(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_managed_key_generate")
-export declare function symmetric_managed_key_generate(
+@external("wasi_ephemeral_crypto", "symmetric_key_generate_managed")
+export declare function symmetric_key_generate_managed(
     key_manager: key_manager, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<symmetric_key>
 ): crypto_errno /* error */;
