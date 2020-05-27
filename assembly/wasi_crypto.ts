@@ -320,17 +320,15 @@ export type signature_encoding = u16;
 
 
 /**
- * Type of an options set.
- * 
- * This is used when creating a new options set with `options_open()`.
+ * An algorithm category.
  */
-export namespace options_type {
-    export const SIGNATURES: options_type = 0;
+export namespace algorithm_type {
+    export const SIGNATURES: algorithm_type = 0;
 
-    export const SYMMETRIC: options_type = 1;
+    export const SYMMETRIC: algorithm_type = 1;
 
 }
-export type options_type = u16;
+export type algorithm_type = u16;
 
 
 /**
@@ -629,6 +627,20 @@ export class opt_symmetric_key {
     }
 }
 
+/**
+ * `$signature_keypair` is just an alias for `$keypair`
+ * 
+ * However, bindings may want to define a specialized type `signature_keypair` as a super class of `keypair`, with additional methods such as `sign`.
+ */
+export type signature_keypair = keypair;
+
+/**
+ * `$signature_publickey` is just an alias for `$publickey`
+ * 
+ * However, bindings may want to define a specialized type `signature_publickey` as a super class of `publickey`, with additional methods such as `verify`.
+ */
+export type signature_publickey = publickey;
+
 
 // ----------------------[wasi_ephemeral_crypto_common]----------------------
 /**
@@ -637,7 +649,7 @@ export class opt_symmetric_key {
  * Example usage:
  * 
  * ```rust
- * let options_handle = options_open()?;
+ * let options_handle = options_open(algorithm_type::symmetric)?;
  * options_set(options_handle, "context", context)?;
  * options_set_u64(options_handle, "threads", 4)?;
  * let state = symmetric_state_open("BLAKE3", None, Some(options_handle))?;
@@ -645,13 +657,13 @@ export class opt_symmetric_key {
  * ```
  */
 /**
- * in:  options_type
+ * in:  algorithm_type
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "options_open")
 export declare function options_open(
-    options_type: options_type,
+    algorithm_type: algorithm_type,
     handle_ptr: mut_ptr<options>
 ): crypto_errno /* error */;
 
@@ -843,17 +855,17 @@ export declare function key_manager_invalidate(
  * Example usage:
  * 
  * ```rust
- * let kp_handle = ctx.keypair_generate("RSA_PKCS1_2048_8192_SHA512", None)?;
+ * let kp_handle = ctx.keypair_generate(AlgorithmType::Signatures, "RSA_PKCS1_2048_8192_SHA512", None)?;
  * ```
  */
 /**
- * in:  algorithm, options
+ * in:  algorithm_type, algorithm, options
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "keypair_generate")
 export declare function keypair_generate(
-    algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
+    algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
@@ -869,17 +881,17 @@ export declare function keypair_generate(
  * Example usage:
  * 
  * ```rust
- * let kp_handle = ctx.keypair_import("RSA_PKCS1_2048_8192_SHA512", KeypairEncoding::PKCS8)?;
+ * let kp_handle = ctx.keypair_import(AlgorithmType::Signatures, "RSA_PKCS1_2048_8192_SHA512", KeypairEncoding::PKCS8)?;
  * ```
  */
 /**
- * in:  algorithm, encoded, encoded_len, encoding
+ * in:  algorithm_type, algorithm, encoded, encoded_len, encoding
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "keypair_import")
 export declare function keypair_import(
-    algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: keypair_encoding,
+    algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: keypair_encoding,
     handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
@@ -899,13 +911,13 @@ export declare function keypair_import(
  * This is also an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager, algorithm, options
+ * in:  key_manager, algorithm_type, algorithm, options
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "keypair_generate_managed")
 export declare function keypair_generate_managed(
-    key_manager: key_manager, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
+    key_manager: key_manager, algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
@@ -1009,17 +1021,17 @@ export declare function keypair_close(
  * Example usage:
  * 
  * ```rust
- * let pk_handle = ctx.publickey_import(encoded, PublicKeyEncoding::Sec)?;
+ * let pk_handle = ctx.publickey_import(AlgorithmType::Signatures, encoded, PublicKeyEncoding::Sec)?;
  * ```
  */
 /**
- * in:  algorithm, encoded, encoded_len, encoding
+ * in:  algorithm_type, algorithm, encoded, encoded_len, encoding
  * out: error, pk
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "publickey_import")
 export declare function publickey_import(
-    algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: publickey_encoding,
+    algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: publickey_encoding,
     pk_ptr: mut_ptr<publickey>
 ): crypto_errno /* error */;
 
@@ -1127,7 +1139,7 @@ export declare function signature_import(
  * Example usage - signature creation
  * 
  * ```rust
- * let kp_handle = ctx.keypair_import("Ed25519ph", keypair, KeypairEncoding::Raw)?;
+ * let kp_handle = ctx.keypair_import(AlgorithmType::Signatures, "Ed25519ph", keypair, KeypairEncoding::Raw)?;
  * let state_handle = ctx.signature_state_open(kp_handle)?;
  * ctx.signature_state_update(state_handle, b"message part 1")?;
  * ctx.signature_state_update(state_handle, b"message part 2")?;
@@ -1142,7 +1154,7 @@ export declare function signature_import(
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "signature_state_open")
 export declare function signature_state_open(
-    kp: keypair,
+    kp: signature_keypair,
     state_ptr: mut_ptr<signature_state>
 ): crypto_errno /* error */;
 
@@ -1204,8 +1216,8 @@ export declare function signature_state_close(
  * Example usage - signature verification:
  * 
  * ```rust
- * let pk_handle = ctx.publickey_import("ECDSA_P256_SHA256", encoded_pk, PublicKeyEncoding::CompressedSec)?;
- * let signature_handle = ctx.signature_import("ECDSA_P256_SHA256", encoded_sig, PublicKeyEncoding::Der)?;
+ * let pk_handle = ctx.publickey_import(AlgorithmType::Signatures, "ECDSA_P256_SHA256", encoded_pk, PublicKeyEncoding::CompressedSec)?;
+ * let signature_handle = ctx.signature_import(AlgorithmType::Signatures, "ECDSA_P256_SHA256", encoded_sig, PublicKeyEncoding::Der)?;
  * let state_handle = ctx.signature_verification_state_open(pk_handle)?;
  * ctx.signature_verification_state_update(state_handle, "message")?;
  * ctx.signature_verification_state_verify(signature_handle)?;
@@ -1218,7 +1230,7 @@ export declare function signature_state_close(
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto", "signature_verification_state_open")
 export declare function signature_verification_state_open(
-    kp: publickey,
+    kp: signature_publickey,
     state_ptr: mut_ptr<signature_verification_state>
 ): crypto_errno /* error */;
 

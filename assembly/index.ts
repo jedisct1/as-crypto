@@ -95,7 +95,7 @@ Console.log("\nEd25519(" + msgStr + "):");
 Console.log(Uint8Array.wrap(signature.raw()!).toString());
 
 let publicKey = keypair.publicKey()!;
-verified = publicKey.verify(msg, signature);
+verified = publicKey.signature_verify(msg, signature);
 Console.log("\nSignature verification:");
 Console.log(verified.toString());
 

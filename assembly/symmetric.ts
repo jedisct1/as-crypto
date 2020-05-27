@@ -105,7 +105,7 @@ export class Aead {
 
     static new(key: SymmetricKey, nonce: ArrayBuffer | null, ad: ArrayBuffer | null): Aead | null {
         let wasiAlg = new crypto.WasiString(key.alg);
-        if (crypto.options_open(crypto.options_type.SYMMETRIC, buf)) {
+        if (crypto.options_open(crypto.algorithm_type.SYMMETRIC, buf)) {
             return null;
         }
         let options = load<crypto.options>(buf);
