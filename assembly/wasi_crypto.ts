@@ -302,6 +302,39 @@ export type publickey_encoding = u16;
 
 
 /**
+ * Encoding to use for importing or exporting a secret key.
+ */
+export namespace secretkey_encoding {
+    /**
+     * Raw bytes.
+     */
+    export const RAW: secretkey_encoding = 0;
+
+    /**
+     * DER encoding.
+     */
+    export const DER: secretkey_encoding = 1;
+
+    /**
+     * PEM encoding.
+     */
+    export const PEM: secretkey_encoding = 2;
+
+    /**
+     * SEC encoding.
+     */
+    export const SEC: secretkey_encoding = 3;
+
+    /**
+     * Compressed SEC encoding.
+     */
+    export const COMPRESSED_SEC: secretkey_encoding = 4;
+
+}
+export type secretkey_encoding = u16;
+
+
+/**
  * Encoding to use for importing or exporting a signature.
  */
 export namespace signature_encoding {
@@ -406,9 +439,14 @@ export type signature_state = handle;
 export type signature = handle;
 
 /**
- * A public key that can be used to verify a signature.
+ * A public key, for key exchange and signature verification.
  */
 export type publickey = handle;
+
+/**
+ * A secret key, for key exchange mechanisms.
+ */
+export type secretkey = handle;
 
 /**
  * A state to absorb signed data to be verified.
@@ -649,7 +687,7 @@ export type signature_publickey = publickey;
  * Example usage:
  * 
  * ```rust
- * let options_handle = options_open(algorithm_type::symmetric)?;
+ * let options_handle = options_open(AlgorithmType::Symmetric)?;
  * options_set(options_handle, "context", context)?;
  * options_set_u64(options_handle, "threads", 4)?;
  * let state = symmetric_state_open("BLAKE3", None, Some(options_handle))?;
@@ -661,7 +699,7 @@ export type signature_publickey = publickey;
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "options_open")
+@external("wasi_ephemeral_crypto_common", "options_open")
 export declare function options_open(
     algorithm_type: algorithm_type,
     handle_ptr: mut_ptr<options>
@@ -677,7 +715,7 @@ export declare function options_open(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "options_close")
+@external("wasi_ephemeral_crypto_common", "options_close")
 export declare function options_close(
     handle: options
 ): crypto_errno /* error */;
@@ -694,7 +732,7 @@ export declare function options_close(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "options_set")
+@external("wasi_ephemeral_crypto_common", "options_set")
 export declare function options_set(
     handle: options, name_ptr: wasi_string_ptr, name_len: usize, value: ptr<u8>, value_len: size
 ): crypto_errno /* error */;
@@ -711,7 +749,7 @@ export declare function options_set(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "options_set_u64")
+@external("wasi_ephemeral_crypto_common", "options_set_u64")
 export declare function options_set_u64(
     handle: options, name_ptr: wasi_string_ptr, name_len: usize, value: u64
 ): crypto_errno /* error */;
@@ -728,7 +766,7 @@ export declare function options_set_u64(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "options_set_guest_buffer")
+@external("wasi_ephemeral_crypto_common", "options_set_guest_buffer")
 export declare function options_set_guest_buffer(
     handle: options, name_ptr: wasi_string_ptr, name_len: usize, buffer: mut_ptr<u8>, buffer_len: size
 ): crypto_errno /* error */;
@@ -743,7 +781,7 @@ export declare function options_set_guest_buffer(
  * out: error, len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "array_output_len")
+@external("wasi_ephemeral_crypto_common", "array_output_len")
 export declare function array_output_len(
     array_output: array_output,
     len_ptr: mut_ptr<size>
@@ -771,7 +809,7 @@ export declare function array_output_len(
  * out: error, len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "array_output_pull")
+@external("wasi_ephemeral_crypto_common", "array_output_pull")
 export declare function array_output_pull(
     array_output: array_output, buf: mut_ptr<u8>, buf_len: size,
     len_ptr: mut_ptr<size>
@@ -791,7 +829,7 @@ export declare function array_output_pull(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "key_manager_open")
+@external("wasi_ephemeral_crypto_common", "key_manager_open")
 export declare function key_manager_open(
     options: opt_options,
     handle_ptr: mut_ptr<key_manager>
@@ -809,7 +847,7 @@ export declare function key_manager_open(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "key_manager_close")
+@external("wasi_ephemeral_crypto_common", "key_manager_close")
 export declare function key_manager_close(
     key_manager: key_manager
 ): crypto_errno /* error */;
@@ -831,7 +869,7 @@ export declare function key_manager_close(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "key_manager_invalidate")
+@external("wasi_ephemeral_crypto_common", "key_manager_invalidate")
 export declare function key_manager_invalidate(
     key_manager: key_manager, key_id: ptr<u8>, key_id_len: size, key_version: version
 ): crypto_errno /* error */;
@@ -863,7 +901,7 @@ export declare function key_manager_invalidate(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_generate")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_generate")
 export declare function keypair_generate(
     algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<keypair>
@@ -889,7 +927,7 @@ export declare function keypair_generate(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_import")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_import")
 export declare function keypair_import(
     algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: keypair_encoding,
     handle_ptr: mut_ptr<keypair>
@@ -915,7 +953,7 @@ export declare function keypair_import(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_generate_managed")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_generate_managed")
 export declare function keypair_generate_managed(
     key_manager: key_manager, algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<keypair>
@@ -934,7 +972,7 @@ export declare function keypair_generate_managed(
  * out: error, kp_id_len, version
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_id")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_id")
 export declare function keypair_id(
     kp: keypair, kp_id: mut_ptr<u8>, kp_id_max_len: size,
     kp_id_len_ptr: mut_ptr<size>, version_ptr: mut_ptr<version>
@@ -956,9 +994,23 @@ export declare function keypair_id(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_from_id")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_from_id")
 export declare function keypair_from_id(
     key_manager: key_manager, kp_id: ptr<u8>, kp_id_len: size, kp_version: version,
+    handle_ptr: mut_ptr<keypair>
+): crypto_errno /* error */;
+
+/**
+ * Create a key pair from a public key and a secret key.
+ */
+/**
+ * in:  publickey, secretkey
+ * out: error, handle
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_from_pk_and_sk")
+export declare function keypair_from_pk_and_sk(
+    publickey: publickey, secretkey: secretkey,
     handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
@@ -972,28 +1024,42 @@ export declare function keypair_from_id(
  * out: error, encoded
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_export")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_export")
 export declare function keypair_export(
     kp: keypair, encoding: keypair_encoding,
     encoded_ptr: mut_ptr<array_output>
 ): crypto_errno /* error */;
 
 /**
- * Get a public key of a key pair.
+ * Get the public key of a key pair.
  */
 /**
  * in:  kp
  * out: error, pk
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_publickey")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_publickey")
 export declare function keypair_publickey(
     kp: keypair,
     pk_ptr: mut_ptr<publickey>
 ): crypto_errno /* error */;
 
 /**
- * Destroys a key pair.
+ * Get the secret key of a key pair.
+ */
+/**
+ * in:  kp
+ * out: error, sk
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_secretkey")
+export declare function keypair_secretkey(
+    kp: keypair,
+    sk_ptr: mut_ptr<secretkey>
+): crypto_errno /* error */;
+
+/**
+ * Destroy a key pair.
  * 
  * The host will automatically wipe traces of the secret key from memory.
  * 
@@ -1004,7 +1070,7 @@ export declare function keypair_publickey(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "keypair_close")
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_close")
 export declare function keypair_close(
     kp: keypair
 ): crypto_errno /* error */;
@@ -1029,7 +1095,7 @@ export declare function keypair_close(
  * out: error, pk
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "publickey_import")
+@external("wasi_ephemeral_crypto_asymmetric_common", "publickey_import")
 export declare function publickey_import(
     algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: publickey_encoding,
     pk_ptr: mut_ptr<publickey>
@@ -1045,7 +1111,7 @@ export declare function publickey_import(
  * out: error, encoded
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "publickey_export")
+@external("wasi_ephemeral_crypto_asymmetric_common", "publickey_export")
 export declare function publickey_export(
     pk: publickey, encoding: publickey_encoding,
     encoded_ptr: mut_ptr<array_output>
@@ -1063,13 +1129,27 @@ export declare function publickey_export(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "publickey_verify")
+@external("wasi_ephemeral_crypto_asymmetric_common", "publickey_verify")
 export declare function publickey_verify(
     pk: publickey
 ): crypto_errno /* error */;
 
 /**
- * Destroys a public key.
+ * Compute the public key for a secret key.
+ */
+/**
+ * in:  sk
+ * out: error, pk
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_asymmetric_common", "publickey_from_secretkey")
+export declare function publickey_from_secretkey(
+    sk: secretkey,
+    pk_ptr: mut_ptr<publickey>
+): crypto_errno /* error */;
+
+/**
+ * Destroy a public key.
  * 
  * Objects are reference counted. It is safe to close an object immediately after the last function needing it is called.
  */
@@ -1078,9 +1158,66 @@ export declare function publickey_verify(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "publickey_close")
+@external("wasi_ephemeral_crypto_asymmetric_common", "publickey_close")
 export declare function publickey_close(
     pk: publickey
+): crypto_errno /* error */;
+
+/**
+ * Import a secret key.
+ * 
+ * The function may return `unsupported_encoding` if importing from the given format is not implemented or incompatible with the key type.
+ * 
+ * It may also return `invalid_key` if the key doesn't appear to match the supplied algorithm.
+ * 
+ * Finally, the function may return `unsupported_algorithm` if the algorithm is not supported by the host.
+ * 
+ * Example usage:
+ * 
+ * ```rust
+ * let pk_handle = ctx.secretkey_import(AlgorithmType::KX, encoded, SecretKeyEncoding::Raw)?;
+ * ```
+ */
+/**
+ * in:  algorithm_type, algorithm, encoded, encoded_len, encoding
+ * out: error, sk
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_asymmetric_common", "secretkey_import")
+export declare function secretkey_import(
+    algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoded: ptr<u8>, encoded_len: size, encoding: secretkey_encoding,
+    sk_ptr: mut_ptr<secretkey>
+): crypto_errno /* error */;
+
+/**
+ * Export a secret key as the given encoding format.
+ * 
+ * May return `unsupported_encoding` if the encoding is not supported.
+ */
+/**
+ * in:  sk, encoding
+ * out: error, encoded
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_asymmetric_common", "secretkey_export")
+export declare function secretkey_export(
+    sk: secretkey, encoding: secretkey_encoding,
+    encoded_ptr: mut_ptr<array_output>
+): crypto_errno /* error */;
+
+/**
+ * Destroy a secret key.
+ * 
+ * Objects are reference counted. It is safe to close an object immediately after the last function needing it is called.
+ */
+/**
+ * in:  sk
+ * out: error
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_asymmetric_common", "secretkey_close")
+export declare function secretkey_close(
+    sk: secretkey
 ): crypto_errno /* error */;
 
 
@@ -1097,7 +1234,7 @@ export declare function publickey_close(
  * out: error, encoded
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_export")
+@external("wasi_ephemeral_crypto_signatures", "signature_export")
 export declare function signature_export(
     signature: signature, encoding: signature_encoding,
     encoded_ptr: mut_ptr<array_output>
@@ -1123,7 +1260,7 @@ export declare function signature_export(
  * out: error, signature
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_import")
+@external("wasi_ephemeral_crypto_signatures", "signature_import")
 export declare function signature_import(
     algorithm_ptr: wasi_string_ptr, algorithm_len: usize, encoding: signature_encoding, encoded: ptr<u8>, encoded_len: size,
     signature_ptr: mut_ptr<signature>
@@ -1152,7 +1289,7 @@ export declare function signature_import(
  * out: error, state
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_state_open")
+@external("wasi_ephemeral_crypto_signatures", "signature_state_open")
 export declare function signature_state_open(
     kp: signature_keypair,
     state_ptr: mut_ptr<signature_state>
@@ -1168,7 +1305,7 @@ export declare function signature_state_open(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_state_update")
+@external("wasi_ephemeral_crypto_signatures", "signature_state_update")
 export declare function signature_state_update(
     state: signature_state, input: ptr<u8>, input_len: size
 ): crypto_errno /* error */;
@@ -1183,7 +1320,7 @@ export declare function signature_state_update(
  * out: error, signature
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_state_sign")
+@external("wasi_ephemeral_crypto_signatures", "signature_state_sign")
 export declare function signature_state_sign(
     state: signature_state,
     signature_ptr: mut_ptr<array_output>
@@ -1201,7 +1338,7 @@ export declare function signature_state_sign(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_state_close")
+@external("wasi_ephemeral_crypto_signatures", "signature_state_close")
 export declare function signature_state_close(
     state: signature_state
 ): crypto_errno /* error */;
@@ -1228,7 +1365,7 @@ export declare function signature_state_close(
  * out: error, state
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_verification_state_open")
+@external("wasi_ephemeral_crypto_signatures", "signature_verification_state_open")
 export declare function signature_verification_state_open(
     kp: signature_publickey,
     state_ptr: mut_ptr<signature_verification_state>
@@ -1244,7 +1381,7 @@ export declare function signature_verification_state_open(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_verification_state_update")
+@external("wasi_ephemeral_crypto_signatures", "signature_verification_state_update")
 export declare function signature_verification_state_update(
     state: signature_verification_state, input: ptr<u8>, input_len: size
 ): crypto_errno /* error */;
@@ -1261,7 +1398,7 @@ export declare function signature_verification_state_update(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_verification_state_verify")
+@external("wasi_ephemeral_crypto_signatures", "signature_verification_state_verify")
 export declare function signature_verification_state_verify(
     state: signature_verification_state, signature: signature
 ): crypto_errno /* error */;
@@ -1278,7 +1415,7 @@ export declare function signature_verification_state_verify(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_verification_state_close")
+@external("wasi_ephemeral_crypto_signatures", "signature_verification_state_close")
 export declare function signature_verification_state_close(
     state: signature_verification_state
 ): crypto_errno /* error */;
@@ -1293,7 +1430,7 @@ export declare function signature_verification_state_close(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "signature_close")
+@external("wasi_ephemeral_crypto_signatures", "signature_close")
 export declare function signature_close(
     signature: signature
 ): crypto_errno /* error */;
@@ -1312,7 +1449,7 @@ export declare function signature_close(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_key_generate")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_generate")
 export declare function symmetric_key_generate(
     algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<symmetric_key>
@@ -1330,7 +1467,7 @@ export declare function symmetric_key_generate(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_key_import")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_import")
 export declare function symmetric_key_import(
     algorithm_ptr: wasi_string_ptr, algorithm_len: usize, raw: ptr<u8>, raw_len: size,
     handle_ptr: mut_ptr<symmetric_key>
@@ -1348,7 +1485,7 @@ export declare function symmetric_key_import(
  * out: error, encoded
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_key_export")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_export")
 export declare function symmetric_key_export(
     symmetric_key: symmetric_key,
     encoded_ptr: mut_ptr<array_output>
@@ -1364,7 +1501,7 @@ export declare function symmetric_key_export(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_key_close")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_close")
 export declare function symmetric_key_close(
     symmetric_key: symmetric_key
 ): crypto_errno /* error */;
@@ -1389,7 +1526,7 @@ export declare function symmetric_key_close(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_key_generate_managed")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_generate_managed")
 export declare function symmetric_key_generate_managed(
     key_manager: key_manager, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<symmetric_key>
@@ -1408,7 +1545,7 @@ export declare function symmetric_key_generate_managed(
  * out: error, symmetric_key_id_len, version
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_key_id")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_id")
 export declare function symmetric_key_id(
     symmetric_key: symmetric_key, symmetric_key_id: mut_ptr<u8>, symmetric_key_id_max_len: size,
     symmetric_key_id_len_ptr: mut_ptr<size>, version_ptr: mut_ptr<version>
@@ -1429,7 +1566,7 @@ export declare function symmetric_key_id(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_key_from_id")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_from_id")
 export declare function symmetric_key_from_id(
     key_manager: key_manager, symmetric_key_id: ptr<u8>, symmetric_key_id_len: size, symmetric_key_version: version,
     handle_ptr: mut_ptr<symmetric_key>
@@ -1618,7 +1755,7 @@ export declare function symmetric_key_from_id(
  * out: error, symmetric_state
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_open")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_open")
 export declare function symmetric_state_open(
     algorithm_ptr: wasi_string_ptr, algorithm_len: usize, key: opt_symmetric_key, options: opt_options,
     symmetric_state_ptr: mut_ptr<symmetric_state>
@@ -1638,7 +1775,7 @@ export declare function symmetric_state_open(
  * out: error, value_len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_options_get")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_options_get")
 export declare function symmetric_state_options_get(
     handle: symmetric_state, name_ptr: wasi_string_ptr, name_len: usize, value: mut_ptr<u8>, value_max_len: size,
     value_len_ptr: mut_ptr<size>
@@ -1658,7 +1795,7 @@ export declare function symmetric_state_options_get(
  * out: error, value
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_options_get_u64")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_options_get_u64")
 export declare function symmetric_state_options_get_u64(
     handle: symmetric_state, name_ptr: wasi_string_ptr, name_len: usize,
     value_ptr: mut_ptr<u64>
@@ -1674,7 +1811,7 @@ export declare function symmetric_state_options_get_u64(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_close")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_close")
 export declare function symmetric_state_close(
     handle: symmetric_state
 ): crypto_errno /* error */;
@@ -1698,7 +1835,7 @@ export declare function symmetric_state_close(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_absorb")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_absorb")
 export declare function symmetric_state_absorb(
     handle: symmetric_state, data: ptr<u8>, data_len: size
 ): crypto_errno /* error */;
@@ -1721,7 +1858,7 @@ export declare function symmetric_state_absorb(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_squeeze")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_squeeze")
 export declare function symmetric_state_squeeze(
     handle: symmetric_state, out: mut_ptr<u8>, out_len: size
 ): crypto_errno /* error */;
@@ -1743,7 +1880,7 @@ export declare function symmetric_state_squeeze(
  * out: error, symmetric_tag
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_squeeze_tag")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_squeeze_tag")
 export declare function symmetric_state_squeeze_tag(
     handle: symmetric_state,
     symmetric_tag_ptr: mut_ptr<symmetric_tag>
@@ -1762,7 +1899,7 @@ export declare function symmetric_state_squeeze_tag(
  * out: error, symmetric_key
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_squeeze_key")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_squeeze_key")
 export declare function symmetric_state_squeeze_key(
     handle: symmetric_state, alg_str_ptr: wasi_string_ptr, alg_str_len: usize,
     symmetric_key_ptr: mut_ptr<symmetric_key>
@@ -1784,7 +1921,7 @@ export declare function symmetric_state_squeeze_key(
  * out: error, len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_max_tag_len")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_max_tag_len")
 export declare function symmetric_state_max_tag_len(
     handle: symmetric_state,
     len_ptr: mut_ptr<size>
@@ -1808,7 +1945,7 @@ export declare function symmetric_state_max_tag_len(
  * out: error, actual_out_len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_encrypt")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_encrypt")
 export declare function symmetric_state_encrypt(
     handle: symmetric_state, out: mut_ptr<u8>, out_len: size, data: ptr<u8>, data_len: size,
     actual_out_len_ptr: mut_ptr<size>
@@ -1832,7 +1969,7 @@ export declare function symmetric_state_encrypt(
  * out: error, symmetric_tag
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_encrypt_detached")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_encrypt_detached")
 export declare function symmetric_state_encrypt_detached(
     handle: symmetric_state, out: mut_ptr<u8>, out_len: size, data: ptr<u8>, data_len: size,
     symmetric_tag_ptr: mut_ptr<symmetric_tag>
@@ -1856,7 +1993,7 @@ export declare function symmetric_state_encrypt_detached(
  * out: error, actual_out_len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_decrypt")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_decrypt")
 export declare function symmetric_state_decrypt(
     handle: symmetric_state, out: mut_ptr<u8>, out_len: size, data: ptr<u8>, data_len: size,
     actual_out_len_ptr: mut_ptr<size>
@@ -1882,7 +2019,7 @@ export declare function symmetric_state_decrypt(
  * out: error, actual_out_len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_decrypt_detached")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_decrypt_detached")
 export declare function symmetric_state_decrypt_detached(
     handle: symmetric_state, out: mut_ptr<u8>, out_len: size, data: ptr<u8>, data_len: size, raw_tag: ptr<u8>, raw_tag_len: size,
     actual_out_len_ptr: mut_ptr<size>
@@ -1900,7 +2037,7 @@ export declare function symmetric_state_decrypt_detached(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_state_ratchet")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_state_ratchet")
 export declare function symmetric_state_ratchet(
     handle: symmetric_state
 ): crypto_errno /* error */;
@@ -1915,7 +2052,7 @@ export declare function symmetric_state_ratchet(
  * out: error, len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_tag_len")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_tag_len")
 export declare function symmetric_tag_len(
     symmetric_tag: symmetric_tag,
     len_ptr: mut_ptr<size>
@@ -1942,7 +2079,7 @@ export declare function symmetric_tag_len(
  * out: error, len
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_tag_pull")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_tag_pull")
 export declare function symmetric_tag_pull(
     symmetric_tag: symmetric_tag, buf: mut_ptr<u8>, buf_len: size,
     len_ptr: mut_ptr<size>
@@ -1970,7 +2107,7 @@ export declare function symmetric_tag_pull(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_tag_verify")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_tag_verify")
 export declare function symmetric_tag_verify(
     symmetric_tag: symmetric_tag, expected_raw_tag_ptr: ptr<u8>, expected_raw_tag_len: size
 ): crypto_errno /* error */;
@@ -1987,7 +2124,7 @@ export declare function symmetric_tag_verify(
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto", "symmetric_tag_close")
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_tag_close")
 export declare function symmetric_tag_close(
     symmetric_tag: symmetric_tag
 ): crypto_errno /* error */;
