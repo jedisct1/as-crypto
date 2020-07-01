@@ -6,10 +6,10 @@
     "test": "node tests"
   },
   "dependencies": {
-    "@assemblyscript/loader": "^0.10"
+    "@assemblyscript/loader": "^0.13"
   },
   "devDependencies": {
-    "as-wasi": "0.0.1",
-    "assemblyscript": "^0.10"
+    "as-wasi": "^0.1",
+    "assemblyscript": "^0.13"
   }
 }
