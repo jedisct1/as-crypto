@@ -9,7 +9,7 @@ export class Signature {
         this.handle = handle;
     }
 
-    protected as(encoding: crypto.signature_encoding): ArrayBuffer | null {
+    protected encoded_as(encoding: crypto.signature_encoding): ArrayBuffer | null {
         if ((error.last = crypto.signature_export(this.handle, encoding, buf))) {
             return null;
         }
@@ -17,11 +17,11 @@ export class Signature {
     }
 
     raw(): ArrayBuffer | null {
-        return this.as(crypto.signature_encoding.RAW);
+        return this.encoded_as(crypto.signature_encoding.RAW);
     }
 
     der(): ArrayBuffer | null {
-        return this.as(crypto.signature_encoding.DER);
+        return this.encoded_as(crypto.signature_encoding.DER);
     }
 
     protected static from(alg: string, encoded: ArrayBuffer, encoding: crypto.signature_encoding): Signature | null {
