@@ -8,7 +8,7 @@ export class PublicKey {
         this.handle = handle;
     }
 
-    protected as(encoding: crypto.publickey_encoding): ArrayBuffer | null {
+    protected encode_as(encoding: crypto.publickey_encoding): ArrayBuffer | null {
         if ((error.last = crypto.publickey_export(this.handle, encoding, buf))) {
             return null;
         }
@@ -16,23 +16,23 @@ export class PublicKey {
     }
 
     raw(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.RAW);
+        return this.encode_as(crypto.publickey_encoding.RAW);
     }
 
     der(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.DER);
+        return this.encode_as(crypto.publickey_encoding.DER);
     }
 
     pem(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.PEM);
+        return this.encode_as(crypto.publickey_encoding.PEM);
     }
 
     sec(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.SEC);
+        return this.encode_as(crypto.publickey_encoding.SEC);
     }
 
     compressedSec(): ArrayBuffer | null {
-        return this.as(crypto.publickey_encoding.COMPRESSED_SEC);
+        return this.encode_as(crypto.publickey_encoding.COMPRESSED_SEC);
     }
 
     private static from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.publickey_encoding): PublicKey | null {
@@ -88,7 +88,7 @@ export class KeyPair {
         return new PublicKey(load<crypto.publickey>(buf));
     }
 
-    protected as(encoding: crypto.keypair_encoding): ArrayBuffer | null {
+    protected encode_as(encoding: crypto.keypair_encoding): ArrayBuffer | null {
         if ((error.last = crypto.keypair_export(this.handle, encoding, buf))) {
             return null;
         }
@@ -96,19 +96,19 @@ export class KeyPair {
     }
 
     raw(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.RAW);
+        return this.encode_as(crypto.keypair_encoding.RAW);
     }
 
     pkcs8(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.PKCS8);
+        return this.encode_as(crypto.keypair_encoding.PKCS8);
     }
 
     der(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.DER);
+        return this.encode_as(crypto.keypair_encoding.DER);
     }
 
     pem(): ArrayBuffer | null {
-        return this.as(crypto.keypair_encoding.PEM);
+        return this.encode_as(crypto.keypair_encoding.PEM);
     }
 
     private static from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.keypair_encoding): KeyPair | null {
