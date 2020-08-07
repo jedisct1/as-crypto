@@ -24,7 +24,7 @@ export class Signature {
         return this.encoded_as(crypto.signature_encoding.DER);
     }
 
-    protected static from(alg: string, encoded: ArrayBuffer, encoding: crypto.signature_encoding): Signature | null {
+    protected static decode_from(alg: string, encoded: ArrayBuffer, encoding: crypto.signature_encoding): Signature | null {
         let wasiAlg = new crypto.WasiString(alg);
         if ((error.last = crypto.signature_import(wasiAlg.ptr, wasiAlg.length, changetype<ptr<u8>>(encoded), encoded.byteLength, encoding, buf))) {
             return null;
@@ -33,11 +33,11 @@ export class Signature {
     }
 
     static fromRaw(alg: string, encoded: ArrayBuffer): Signature | null {
-        return this.from(alg, encoded, crypto.signature_encoding.RAW);
+        return this.decode_from(alg, encoded, crypto.signature_encoding.RAW);
     }
 
     static fromDer(alg: string, encoded: ArrayBuffer): Signature | null {
-        return this.from(alg, encoded, crypto.signature_encoding.DER);
+        return this.decode_from(alg, encoded, crypto.signature_encoding.DER);
     }
 }
 

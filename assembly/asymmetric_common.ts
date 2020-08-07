@@ -35,7 +35,7 @@ export class PublicKey {
         return this.encode_as(crypto.publickey_encoding.COMPRESSED_SEC);
     }
 
-    private static from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.publickey_encoding): PublicKey | null {
+    private static decode_from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.publickey_encoding): PublicKey | null {
         let wasiAlg = new crypto.WasiString(alg);
         if ((error.last = crypto.publickey_import(algType, wasiAlg.ptr, wasiAlg.length, changetype<ptr<u8>>(encoded), encoded.byteLength, encoding, buf))) {
             return null;
@@ -44,23 +44,23 @@ export class PublicKey {
     }
 
     protected static _fromRaw(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
-        return this.from(algType, alg, encoded, crypto.publickey_encoding.RAW);
+        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.RAW);
     }
 
     protected static _fromDer(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
-        return this.from(algType, alg, encoded, crypto.publickey_encoding.DER);
+        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.DER);
     }
 
     protected static _fromPem(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
-        return this.from(algType, alg, encoded, crypto.publickey_encoding.PEM);
+        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.PEM);
     }
 
     protected static _fromSec(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
-        return this.from(algType, alg, encoded, crypto.publickey_encoding.SEC);
+        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.SEC);
     }
 
     protected static _fromCompressedSec(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
-        return this.from(algType, alg, encoded, crypto.publickey_encoding.COMPRESSED_SEC);
+        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.COMPRESSED_SEC);
     }
 }
 
@@ -111,7 +111,7 @@ export class KeyPair {
         return this.encode_as(crypto.keypair_encoding.PEM);
     }
 
-    private static from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.keypair_encoding): KeyPair | null {
+    private static decode_from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.keypair_encoding): KeyPair | null {
         let wasiAlg = new crypto.WasiString(alg);
         if ((error.last = crypto.keypair_import(algType, wasiAlg.ptr, wasiAlg.length, changetype<ptr<u8>>(encoded), encoded.byteLength, encoding, buf))) {
             return null;
@@ -120,18 +120,18 @@ export class KeyPair {
     }
 
     protected static _fromRaw(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): KeyPair | null {
-        return this.from(algType, alg, encoded, crypto.keypair_encoding.RAW);
+        return this.decode_from(algType, alg, encoded, crypto.keypair_encoding.RAW);
     }
 
     protected static _fromPkcs8(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): KeyPair | null {
-        return this.from(algType, alg, encoded, crypto.keypair_encoding.PKCS8);
+        return this.decode_from(algType, alg, encoded, crypto.keypair_encoding.PKCS8);
     }
 
     protected static _fromPem(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): KeyPair | null {
-        return this.from(algType, alg, encoded, crypto.keypair_encoding.PEM);
+        return this.decode_from(algType, alg, encoded, crypto.keypair_encoding.PEM);
     }
 
     protected static _fromDer(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): KeyPair | null {
-        return this.from(algType, alg, encoded, crypto.keypair_encoding.DER);
+        return this.decode_from(algType, alg, encoded, crypto.keypair_encoding.DER);
     }
 }
