@@ -693,6 +693,34 @@ export type signature_keypair = keypair;
  */
 export type signature_publickey = publickey;
 
+/**
+ * `$signature_secretkey` is just an alias for `$secretkey`
+ *
+ * However, bindings may want to define a specialized type `signature_secretkey` as a super class of `secretkey`.
+ */
+export type signature_secretkey = secretkey;
+
+/**
+ * `$kx_keypair` is just an alias for `$keypair`
+ *
+ * However, bindings may want to define a specialized type `kx_keypair` as a super class of `keypair`.
+ */
+export type kx_keypair = keypair;
+
+/**
+ * `$kx_publickey` is just an alias for `$publickey`
+ *
+ * However, bindings may want to define a specialized type `kx_publickey` as a super class of `publickey`, with additional methods such as `dh`.
+ */
+export type kx_publickey = publickey;
+
+/**
+ * `$kx_secretkey` is just an alias for `$secretkey`
+ *
+ * However, bindings may want to define a specialized type `kx_secretkey` as a super class of `secretkeykey`, with additional methods such as `dh`.
+ */
+export type kx_secretkey = secretkey;
+
 
 // ----------------------[wasi_ephemeral_crypto_common]----------------------
 /**
@@ -2210,5 +2238,62 @@ export declare function symmetric_tag_verify(
 @external("wasi_ephemeral_crypto_symmetric", "symmetric_tag_close")
 export declare function symmetric_tag_close(
     symmetric_tag: symmetric_tag
+): crypto_errno /* error */;
+
+
+// ----------------------[wasi_ephemeral_crypto_kx]----------------------
+/**
+ * Perform a simple Diffie-Hellman key exchange.
+ *
+ * Both keys must be of the same type, or else the `$crypto_errno.incompatible_keys` error is returned.
+ * The algorithm also has to support this kind of key exchange. If this is not the case, the `$crypto_errno.invalid_operation` error is returned.
+ *
+ * Otherwide, a raw shared key is returned, and can be imported as a symmetric key.
+ * ```
+ */
+/**
+ * in:  pk, sk
+ * out: error, shared_secret
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_kx", "kx_dh")
+export declare function kx_dh(
+    pk: publickey, sk: secretkey,
+    shared_secret_ptr: mut_ptr<array_output>
+): crypto_errno /* error */;
+
+/**
+ * Create a shared secret and encrypt it for the given public key.
+ *
+ * This operation is only compatible with specific algorithms.
+ * If a selected algorithm doesn't support it, `$crypto_errno.invalid_operation` is returned.
+ *
+ * On success, both the shared secret and its encrypted version are returned.
+ */
+/**
+ * in:  pk
+ * out: error, secret, encapsulated_secret
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_kx", "kx_encapsulate")
+export declare function kx_encapsulate(
+    pk: publickey,
+    secret_ptr: mut_ptr<array_output>, encapsulated_secret_ptr: mut_ptr<array_output>
+): crypto_errno /* error */;
+
+/**
+ * Decapsulate an encapsulated secret crated with `kx_encapsulate`
+ *
+ * Return the secret, or `$crypto_errno.verification_failed` on error.
+ */
+/**
+ * in:  sk, encapsulated_secret, encapsulated_secret_len
+ * out: error, secret
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_kx", "kx_decapsulate")
+export declare function kx_decapsulate(
+    sk: secretkey, encapsulated_secret: ptr<u8>, encapsulated_secret_len: size,
+    secret_ptr: mut_ptr<array_output>
 ): crypto_errno /* error */;
 
