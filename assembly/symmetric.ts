@@ -126,11 +126,16 @@ export class Aead {
         return aead;
     }
 
-    encrypt(msg: ArrayBuffer): ArrayBuffer | null {
+    maxTagLen(): usize {
         if ((error.last = crypto.symmetric_state_max_tag_len(this.state, buf))) {
-            return null;
+            return 0;
         }
         let maxTagLen = load<usize>(buf);
+        return maxTagLen;
+    }
+
+    encrypt(msg: ArrayBuffer): ArrayBuffer | null {
+        let maxTagLen = this.maxTagLen();
         let out = new ArrayBuffer(msg.byteLength + (maxTagLen as i32));
         if ((error.last = crypto.symmetric_state_encrypt(this.state, changetype<ptr<u8>>(out), msg.byteLength as usize + maxTagLen, changetype<ptr<u8>>(msg), msg.byteLength, buf))) {
             return null;
@@ -139,7 +144,11 @@ export class Aead {
     }
 
     decrypt(ciphertext: ArrayBuffer): ArrayBuffer | null {
-        let out = new ArrayBuffer(ciphertext.byteLength);
+        let maxTagLen = this.maxTagLen();
+        if (ciphertext.byteLength < (maxTagLen as i32)) {
+            return null;
+        }
+        let out = new ArrayBuffer(ciphertext.byteLength - (maxTagLen as i32));
         if ((crypto.symmetric_state_decrypt(this.state, changetype<ptr<u8>>(out), out.byteLength, changetype<ptr<u8>>(ciphertext), ciphertext.byteLength, buf))) {
             return null;
         }

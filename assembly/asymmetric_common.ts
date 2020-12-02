@@ -19,8 +19,8 @@ export class PublicKey {
         return this.encode_as(crypto.publickey_encoding.RAW);
     }
 
-    der(): ArrayBuffer | null {
-        return this.encode_as(crypto.publickey_encoding.DER);
+    pkcs8(): ArrayBuffer | null {
+        return this.encode_as(crypto.publickey_encoding.PKCS8);
     }
 
     pem(): ArrayBuffer | null {
@@ -35,6 +35,10 @@ export class PublicKey {
         return this.encode_as(crypto.publickey_encoding.COMPRESSED_SEC);
     }
 
+    local(): ArrayBuffer | null {
+        return this.encode_as(crypto.publickey_encoding.LOCAL);
+    }
+
     private static decode_from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.publickey_encoding): PublicKey | null {
         let wasiAlg = new crypto.WasiString(alg);
         if ((error.last = crypto.publickey_import(algType, wasiAlg.ptr, wasiAlg.length, changetype<ptr<u8>>(encoded), encoded.byteLength, encoding, buf))) {
@@ -47,8 +51,8 @@ export class PublicKey {
         return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.RAW);
     }
 
-    protected static _fromDer(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
-        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.DER);
+    protected static _fromPkcs8(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
+        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.PKCS8);
     }
 
     protected static _fromPem(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
@@ -61,6 +65,10 @@ export class PublicKey {
 
     protected static _fromCompressedSec(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
         return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.COMPRESSED_SEC);
+    }
+
+    protected static _fromLocal(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): PublicKey | null {
+        return this.decode_from(algType, alg, encoded, crypto.publickey_encoding.LOCAL);
     }
 }
 
@@ -103,12 +111,12 @@ export class KeyPair {
         return this.encode_as(crypto.keypair_encoding.PKCS8);
     }
 
-    der(): ArrayBuffer | null {
-        return this.encode_as(crypto.keypair_encoding.DER);
-    }
-
     pem(): ArrayBuffer | null {
         return this.encode_as(crypto.keypair_encoding.PEM);
+    }
+
+    local(): ArrayBuffer | null {
+        return this.encode_as(crypto.keypair_encoding.LOCAL);
     }
 
     private static decode_from(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer, encoding: crypto.keypair_encoding): KeyPair | null {
@@ -131,7 +139,7 @@ export class KeyPair {
         return this.decode_from(algType, alg, encoded, crypto.keypair_encoding.PEM);
     }
 
-    protected static _fromDer(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): KeyPair | null {
-        return this.decode_from(algType, alg, encoded, crypto.keypair_encoding.DER);
+    protected static _fromLocal(algType: crypto.algorithm_type, alg: string, encoded: ArrayBuffer): KeyPair | null {
+        return this.decode_from(algType, alg, encoded, crypto.keypair_encoding.LOCAL);
     }
 }

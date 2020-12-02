@@ -216,9 +216,9 @@ export namespace crypto_errno {
     /**
      * A key or key pair matching the requested identifier cannot be found using the supplied information.
      *
-     * This error is returned by a key manager via the `keypair_from_id()` function.
+     * This error is returned by a secrets manager via the `keypair_from_id()` function.
      */
-    export const KEY_NOT_FOUND: crypto_errno = 25;
+    export const NOT_FOUND: crypto_errno = 25;
 
     /**
      * The algorithm requires parameters that haven't been set.
@@ -244,9 +244,9 @@ export namespace crypto_errno {
     export const INCOMPATIBLE_KEYS: crypto_errno = 28;
 
     /**
-     * A managed key expired and cannot be used any more.
+     * A managed key or secret expired and cannot be used any more.
      */
-    export const EXPIRED_KEY: crypto_errno = 29;
+    export const EXPIRED: crypto_errno = 29;
 
 }
 export type crypto_errno = u16;
@@ -262,19 +262,19 @@ export namespace keypair_encoding {
     export const RAW: keypair_encoding = 0;
 
     /**
-     * PCSK8 encoding.
+     * PCSK8/DER encoding.
      */
     export const PKCS8: keypair_encoding = 1;
 
     /**
-     * DER encoding.
-     */
-    export const DER: keypair_encoding = 2;
-
-    /**
      * PEM encoding.
      */
-    export const PEM: keypair_encoding = 3;
+    export const PEM: keypair_encoding = 2;
+
+    /**
+     * Implementation-defined encoding.
+     */
+    export const LOCAL: keypair_encoding = 3;
 
 }
 export type keypair_encoding = u16;
@@ -290,9 +290,9 @@ export namespace publickey_encoding {
     export const RAW: publickey_encoding = 0;
 
     /**
-     * DER encoding.
+     * PKCS8/DER encoding.
      */
-    export const DER: publickey_encoding = 1;
+    export const PKCS8: publickey_encoding = 1;
 
     /**
      * PEM encoding.
@@ -309,6 +309,11 @@ export namespace publickey_encoding {
      */
     export const COMPRESSED_SEC: publickey_encoding = 4;
 
+    /**
+     * Implementation-defined encoding.
+     */
+    export const LOCAL: publickey_encoding = 5;
+
 }
 export type publickey_encoding = u16;
 
@@ -323,9 +328,9 @@ export namespace secretkey_encoding {
     export const RAW: secretkey_encoding = 0;
 
     /**
-     * DER encoding.
+     * PKCS8/DER encoding.
      */
-    export const DER: secretkey_encoding = 1;
+    export const PKCS8: secretkey_encoding = 1;
 
     /**
      * PEM encoding.
@@ -341,6 +346,11 @@ export namespace secretkey_encoding {
      * Compressed SEC encoding.
      */
     export const COMPRESSED_SEC: secretkey_encoding = 4;
+
+    /**
+     * Implementation-defined encoding.
+     */
+    export const LOCAL: secretkey_encoding = 5;
 
 }
 export type secretkey_encoding = u16;
@@ -406,6 +416,11 @@ export type version = u64;
 export type size = usize;
 
 /**
+ * A UNIX timestamp, in seconds since 01/01/1970.
+ */
+export type timestamp = u64;
+
+/**
  * Handle for functions returning output whose size may be large or not known in advance.
  *
  * An `array_output` object contains a host-allocated byte array.
@@ -427,11 +442,11 @@ export type array_output = handle;
 export type options = handle;
 
 /**
- * A handle to the optional key management facilities offered by a host.
+ * A handle to the optional secrets management facilities offered by a host.
  *
  * This is used to generate, retrieve and invalidate managed keys.
  */
-export type key_manager = handle;
+export type secrets_manager = handle;
 
 /**
  * A key pair.
@@ -765,7 +780,7 @@ export declare function options_close(
 /**
  * Set or update an option.
  *
- * This is used to set algorithm-specific parameters, but also to provide credentials for the key management facilities, if required.
+ * This is used to set algorithm-specific parameters, but also to provide credentials for the secrets management facilities, if required.
  *
  * This function may return `unsupported_option` if an option that doesn't exist for any implemented algorithms is specified.
  */
@@ -859,11 +874,11 @@ export declare function array_output_pull(
 
 /**
  * __(optional)__
- * Create a context to use a key manager.
+ * Create a context to use a secrets manager.
  *
  * The set of required and supported options is defined by the host.
  *
- * The function returns the `unsupported_feature` error code if key management facilities are not supported by the host.
+ * The function returns the `unsupported_feature` error code if secrets management facilities are not supported by the host.
  * This is also an optional import, meaning that the function may not even exist.
  */
 /**
@@ -871,49 +886,49 @@ export declare function array_output_pull(
  * out: error, handle
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto_common", "key_manager_open")
-export declare function key_manager_open(
+@external("wasi_ephemeral_crypto_common", "secrets_manager_open")
+export declare function secrets_manager_open(
     options: opt_options,
-    handle_ptr: mut_ptr<key_manager>
+    handle_ptr: mut_ptr<secrets_manager>
 ): crypto_errno /* error */;
 
 /**
  * __(optional)__
- * Destroy a key manager context.
+ * Destroy a secrets manager context.
  *
- * The function returns the `unsupported_feature` error code if key management facilities are not supported by the host.
+ * The function returns the `unsupported_feature` error code if secrets management facilities are not supported by the host.
  * This is also an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager
+ * in:  secrets_manager
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto_common", "key_manager_close")
-export declare function key_manager_close(
-    key_manager: key_manager
+@external("wasi_ephemeral_crypto_common", "secrets_manager_close")
+export declare function secrets_manager_close(
+    secrets_manager: secrets_manager
 ): crypto_errno /* error */;
 
 /**
  * __(optional)__
  * Invalidate a managed key or key pair given an identifier and a version.
  *
- * This asks the key manager to delete or revoke a stored key, a specific version of a key..
+ * This asks the secrets manager to delete or revoke a stored key, a specific version of a key.
  *
  * `key_version` can be set to a version number, to `version.latest` to invalidate the current version, or to `version.all` to invalidate all versions of a key.
  *
- * The function returns `unsupported_feature` if this operation is not supported by the host, and `key_not_found` if the identifier and version don't match any existing key.
+ * The function returns `unsupported_feature` if this operation is not supported by the host, and `not_found` if the identifier and version don't match any existing key.
  *
  * This is an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager, key_id, key_id_len, key_version
+ * in:  secrets_manager, key_id, key_id_len, key_version
  * out: error
  */
 // @ts-ignore: decorator
-@external("wasi_ephemeral_crypto_common", "key_manager_invalidate")
-export declare function key_manager_invalidate(
-    key_manager: key_manager, key_id: ptr<u8>, key_id_len: size, key_version: version
+@external("wasi_ephemeral_crypto_common", "secrets_manager_invalidate")
+export declare function secrets_manager_invalidate(
+    secrets_manager: secrets_manager, key_id: ptr<u8>, key_id_len: size, key_version: version
 ): crypto_errno /* error */;
 
 
@@ -935,7 +950,7 @@ export declare function key_manager_invalidate(
  * Example usage:
  *
  * ```rust
- * let kp_handle = ctx.keypair_generate(AlgorithmType::Signatures, "RSA_PKCS1_2048_8192_SHA512", None)?;
+ * let kp_handle = ctx.keypair_generate(AlgorithmType::Signatures, "RSA_PKCS1_2048_SHA256", None)?;
  * ```
  */
 /**
@@ -961,7 +976,7 @@ export declare function keypair_generate(
  * Example usage:
  *
  * ```rust
- * let kp_handle = ctx.keypair_import(AlgorithmType::Signatures, "RSA_PKCS1_2048_8192_SHA512", KeypairEncoding::PKCS8)?;
+ * let kp_handle = ctx.keypair_import(AlgorithmType::Signatures, "RSA_PKCS1_2048_SHA256", KeypairEncoding::PKCS8)?;
  * ```
  */
 /**
@@ -979,11 +994,11 @@ export declare function keypair_import(
  * __(optional)__
  * Generate a new managed key pair.
  *
- * The key pair is generated and stored by the key management facilities.
+ * The key pair is generated and stored by the secrets management facilities.
  *
  * It may be used through its identifier, but the host may not allow it to be exported.
  *
- * The function returns the `unsupported_feature` error code if key management facilities are not supported by the host,
+ * The function returns the `unsupported_feature` error code if secrets management facilities are not supported by the host,
  * or `unsupported_algorithm` if a key cannot be created for the chosen algorithm.
  *
  * The function may also return `unsupported_algorithm` if the algorithm is not supported by the host.
@@ -991,14 +1006,33 @@ export declare function keypair_import(
  * This is also an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager, algorithm_type, algorithm, options
+ * in:  secrets_manager, algorithm_type, algorithm, options
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto_asymmetric_common", "keypair_generate_managed")
 export declare function keypair_generate_managed(
-    key_manager: key_manager, algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
+    secrets_manager: secrets_manager, algorithm_type: algorithm_type, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<keypair>
+): crypto_errno /* error */;
+
+/**
+ * __(optional)__
+ * Store a key pair into the secrets manager.
+ *
+ * On success, the function stores the key pair identifier into `$kp_id`,
+ * into which up to `$kp_id_max_len` can be written.
+ *
+ * The function returns `overflow` if the supplied buffer is too small.
+ */
+/**
+ * in:  secrets_manager, kp, kp_id, kp_id_max_len
+ * out: error
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_asymmetric_common", "keypair_store_managed")
+export declare function keypair_store_managed(
+    secrets_manager: secrets_manager, kp: keypair, kp_id: mut_ptr<u8>, kp_id_max_len: size
 ): crypto_errno /* error */;
 
 /**
@@ -1015,23 +1049,23 @@ export declare function keypair_generate_managed(
  *
  * Both keys must share the same algorithm and have compatible parameters. If this is not the case, `incompatible_keys` is returned.
  *
- * The function may also return the `unsupported_feature` error code if key management facilities are not supported by the host,
+ * The function may also return the `unsupported_feature` error code if secrets management facilities are not supported by the host,
  * or if keys cannot be rotated.
  *
- * Finally, `prohibited_operation` can be returned if `$kp_new` wasn't created by the key manager, and the key manager prohibits imported keys.
+ * Finally, `prohibited_operation` can be returned if `$kp_new` wasn't created by the secrets manager, and the secrets manager prohibits imported keys.
  *
  * If the operation succeeded, the new version is returned.
  *
  * This is an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager, kp_old, kp_new
+ * in:  secrets_manager, kp_old, kp_new
  * out: error, version
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto_asymmetric_common", "keypair_replace_managed")
 export declare function keypair_replace_managed(
-    key_manager: key_manager, kp_old: keypair, kp_new: keypair,
+    secrets_manager: secrets_manager, kp_old: keypair, kp_new: keypair,
     version_ptr: mut_ptr<version>
 ): crypto_errno /* error */;
 
@@ -1060,19 +1094,19 @@ export declare function keypair_id(
  *
  * `kp_version` can be set to `version_latest` to retrieve the most recent version of a key pair.
  *
- * If no key pair matching the provided information is found, `key_not_found` is returned instead.
+ * If no key pair matching the provided information is found, `not_found` is returned instead.
  *
  * This is an optional import, meaning that the function may not even exist.
  * ```
  */
 /**
- * in:  key_manager, kp_id, kp_id_len, kp_version
+ * in:  secrets_manager, kp_id, kp_id_len, kp_version
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto_asymmetric_common", "keypair_from_id")
 export declare function keypair_from_id(
-    key_manager: key_manager, kp_id: ptr<u8>, kp_id_len: size, kp_version: version,
+    secrets_manager: secrets_manager, kp_id: ptr<u8>, kp_id_len: size, kp_version: version,
     handle_ptr: mut_ptr<keypair>
 ): crypto_errno /* error */;
 
@@ -1586,11 +1620,11 @@ export declare function symmetric_key_close(
  * __(optional)__
  * Generate a new managed symmetric key.
  *
- * The key is generated and stored by the key management facilities.
+ * The key is generated and stored by the secrets management facilities.
  *
  * It may be used through its identifier, but the host may not allow it to be exported.
  *
- * The function returns the `unsupported_feature` error code if key management facilities are not supported by the host,
+ * The function returns the `unsupported_feature` error code if secrets management facilities are not supported by the host,
  * or `unsupported_algorithm` if a key cannot be created for the chosen algorithm.
  *
  * The function may also return `unsupported_algorithm` if the algorithm is not supported by the host.
@@ -1598,14 +1632,33 @@ export declare function symmetric_key_close(
  * This is also an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager, algorithm, options
+ * in:  secrets_manager, algorithm, options
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto_symmetric", "symmetric_key_generate_managed")
 export declare function symmetric_key_generate_managed(
-    key_manager: key_manager, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
+    secrets_manager: secrets_manager, algorithm_ptr: wasi_string_ptr, algorithm_len: usize, options: opt_options,
     handle_ptr: mut_ptr<symmetric_key>
+): crypto_errno /* error */;
+
+/**
+ * __(optional)__
+ * Store a symmetric key into the secrets manager.
+ *
+ * On success, the function stores the key identifier into `$symmetric_key_id`,
+ * into which up to `$symmetric_key_id_max_len` can be written.
+ *
+ * The function returns `overflow` if the supplied buffer is too small.
+ */
+/**
+ * in:  secrets_manager, symmetric_key, symmetric_key_id, symmetric_key_id_max_len
+ * out: error
+ */
+// @ts-ignore: decorator
+@external("wasi_ephemeral_crypto_symmetric", "symmetric_key_store_managed")
+export declare function symmetric_key_store_managed(
+    secrets_manager: secrets_manager, symmetric_key: symmetric_key, symmetric_key_id: mut_ptr<u8>, symmetric_key_id_max_len: size
 ): crypto_errno /* error */;
 
 /**
@@ -1622,23 +1675,23 @@ export declare function symmetric_key_generate_managed(
  *
  * Both keys must share the same algorithm and have compatible parameters. If this is not the case, `incompatible_keys` is returned.
  *
- * The function may also return the `unsupported_feature` error code if key management facilities are not supported by the host,
+ * The function may also return the `unsupported_feature` error code if secrets management facilities are not supported by the host,
  * or if keys cannot be rotated.
  *
- * Finally, `prohibited_operation` can be returned if `$symmetric_key_new` wasn't created by the key manager, and the key manager prohibits imported keys.
+ * Finally, `prohibited_operation` can be returned if `$symmetric_key_new` wasn't created by the secrets manager, and the secrets manager prohibits imported keys.
  *
  * If the operation succeeded, the new version is returned.
  *
  * This is an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager, symmetric_key_old, symmetric_key_new
+ * in:  secrets_manager, symmetric_key_old, symmetric_key_new
  * out: error, version
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto_symmetric", "symmetric_key_replace_managed")
 export declare function symmetric_key_replace_managed(
-    key_manager: key_manager, symmetric_key_old: symmetric_key, symmetric_key_new: symmetric_key,
+    secrets_manager: secrets_manager, symmetric_key_old: symmetric_key, symmetric_key_new: symmetric_key,
     version_ptr: mut_ptr<version>
 ): crypto_errno /* error */;
 
@@ -1667,18 +1720,18 @@ export declare function symmetric_key_id(
  *
  * `kp_version` can be set to `version_latest` to retrieve the most recent version of a symmetric key.
  *
- * If no key matching the provided information is found, `key_not_found` is returned instead.
+ * If no key matching the provided information is found, `not_found` is returned instead.
  *
  * This is an optional import, meaning that the function may not even exist.
  */
 /**
- * in:  key_manager, symmetric_key_id, symmetric_key_id_len, symmetric_key_version
+ * in:  secrets_manager, symmetric_key_id, symmetric_key_id_len, symmetric_key_version
  * out: error, handle
  */
 // @ts-ignore: decorator
 @external("wasi_ephemeral_crypto_symmetric", "symmetric_key_from_id")
 export declare function symmetric_key_from_id(
-    key_manager: key_manager, symmetric_key_id: ptr<u8>, symmetric_key_id_len: size, symmetric_key_version: version,
+    secrets_manager: secrets_manager, symmetric_key_id: ptr<u8>, symmetric_key_id_len: size, symmetric_key_version: version,
     handle_ptr: mut_ptr<symmetric_key>
 ): crypto_errno /* error */;
 
@@ -1847,8 +1900,8 @@ export declare function symmetric_key_from_id(
  * let mut out = [0u8; 16];
  * let mut out2 = [0u8; 16];
  * let mut ciphertext = [0u8; 20];
- * let key_handle = ctx.symmetric_key_generate("Xoodyak-256", None)?;
- * let state_handle = ctx.symmetric_state_open("Xoodyak-256", Some(key_handle), None)?;
+ * let key_handle = ctx.symmetric_key_generate("Xoodyak-128", None)?;
+ * let state_handle = ctx.symmetric_state_open("Xoodyak-128", Some(key_handle), None)?;
  * ctx.symmetric_state_absorb(state_handle, b"data")?;
  * ctx.symmetric_state_encrypt(state_handle, &mut ciphertext, b"abcd")?;
  * ctx.symmetric_state_absorb(state_handle, b"more data")?;
@@ -1856,7 +1909,7 @@ export declare function symmetric_key_from_id(
  * ctx.symmetric_state_squeeze(state_handle, &mut out2)?;
  * ctx.symmetric_state_ratchet(state_handle)?;
  * ctx.symmetric_state_absorb(state_handle, b"more data")?;
- * let next_key_handle = ctx.symmetric_state_squeeze_key(state_handle, "Xoodyak-256")?;
+ * let next_key_handle = ctx.symmetric_state_squeeze_key(state_handle, "Xoodyak-128")?;
  * // ...
  * ```
  */

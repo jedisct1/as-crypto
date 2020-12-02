@@ -59,8 +59,8 @@ export class SignaturePublicKey extends PublicKey {
         return changetype<SignaturePublicKey | null>(super._fromRaw(crypto.algorithm_type.SIGNATURES, alg, encoded))
     }
 
-    static fromDer(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
-        return changetype<SignaturePublicKey | null>(super._fromDer(crypto.algorithm_type.SIGNATURES, alg, encoded))
+    static fromPkcs8(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
+        return changetype<SignaturePublicKey | null>(super._fromPkcs8(crypto.algorithm_type.SIGNATURES, alg, encoded))
     }
 
     static fromPem(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
@@ -73,6 +73,10 @@ export class SignaturePublicKey extends PublicKey {
 
     static fromCompressedSec(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
         return changetype<SignaturePublicKey | null>(super._fromCompressedSec(crypto.algorithm_type.SIGNATURES, alg, encoded))
+    }
+
+    static fromLocal(alg: string, encoded: ArrayBuffer): SignaturePublicKey | null {
+        return changetype<SignaturePublicKey | null>(super._fromLocal(crypto.algorithm_type.SIGNATURES, alg, encoded))
     }
 }
 
@@ -97,8 +101,8 @@ export class SignatureKeyPair extends KeyPair {
         return changetype<SignatureKeyPair | null>(super._fromPem(crypto.algorithm_type.SIGNATURES, alg, encoded))
     }
 
-    static fromDer(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
-        return changetype<SignatureKeyPair | null>(super._fromDer(crypto.algorithm_type.SIGNATURES, alg, encoded))
+    static fromLocal(alg: string, encoded: ArrayBuffer): SignatureKeyPair | null {
+        return changetype<SignatureKeyPair | null>(super._fromLocal(crypto.algorithm_type.SIGNATURES, alg, encoded))
     }
 
     sign(msg: ArrayBuffer): Signature | null {

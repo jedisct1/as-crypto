@@ -1,3 +1,5 @@
+import "wasi";
+
 import { Console, Random } from "as-wasi";
 import { Auth, Hash, Hkdf, SymmetricKey, Aead, SignatureKeyPair, SignaturePublicKey } from "./crypto";
 
@@ -22,11 +24,11 @@ Console.log(Uint8Array.wrap(h).toString());
 // Keyed hashing
 
 Console.log("\n--- Keyed hashing");
-let key = SymmetricKey.generate("Xoodyak-256")!;
+let key = SymmetricKey.generate("Xoodyak-128")!;
 let st = Hash.keyed(key)!;
 st.absorb(msg);
 h = st.squeeze(16)!;
-Console.log("\Xoodyak-256(k, " + msgStr + ", 16):");
+Console.log("\Xoodyak-128(k, " + msgStr + ", 16):");
 Console.log(Uint8Array.wrap(h).toString());
 
 // --- Encryption
@@ -104,8 +106,8 @@ Console.log(verified.toString());
 Console.log("\n--- ECDSA signatures");
 keypair = SignatureKeyPair.generate("ECDSA_P256_SHA256")!;
 
-let encodedKeypair = keypair.pkcs8()!;
-Console.log("\nPKCS8-encoded ECDSA keypair:");
+let encodedKeypair = keypair.raw()!;
+Console.log("\nECDSA keypair:");
 Console.log(Uint8Array.wrap(encodedKeypair).toString());
 
 publicKey = keypair.publicKey()!;
