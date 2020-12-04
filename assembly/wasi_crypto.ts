@@ -206,26 +206,31 @@ export namespace crypto_errno {
     export const NONCE_REQUIRED: crypto_errno = 23;
 
     /**
+     * The provided nonce doesn't have a correct size for the given cipher.
+     */
+    export const INVALID_NONCE: crypto_errno = 24;
+
+    /**
      * The named option was not set.
      *
      * The caller tried to read the value of an option that was not set.
      * This error is used to make the distinction between an empty option, and an option that was not set and left to its default value.
      */
-    export const OPTION_NOT_SET: crypto_errno = 24;
+    export const OPTION_NOT_SET: crypto_errno = 25;
 
     /**
      * A key or key pair matching the requested identifier cannot be found using the supplied information.
      *
      * This error is returned by a secrets manager via the `keypair_from_id()` function.
      */
-    export const NOT_FOUND: crypto_errno = 25;
+    export const NOT_FOUND: crypto_errno = 26;
 
     /**
      * The algorithm requires parameters that haven't been set.
      *
      * Non-generic options are required and must be given by building an `options` set and giving that object to functions instantiating that algorithm.
      */
-    export const PARAMETERS_MISSING: crypto_errno = 26;
+    export const PARAMETERS_MISSING: crypto_errno = 27;
 
     /**
      * A requested computation is not done yet, and additional calls to the function are required.
@@ -234,19 +239,19 @@ export namespace crypto_errno {
      *
      * In order to avoid a host call to be blocked for too long, these functions can return prematurely, requiring additional calls with the same parameters until they complete.
      */
-    export const IN_PROGRESS: crypto_errno = 27;
+    export const IN_PROGRESS: crypto_errno = 28;
 
     /**
      * Multiple keys have been provided, but they do not share the same type.
      *
      * This error is returned when trying to build a key pair from a public key and a secret key that were created for different and incompatible algorithms.
      */
-    export const INCOMPATIBLE_KEYS: crypto_errno = 28;
+    export const INCOMPATIBLE_KEYS: crypto_errno = 29;
 
     /**
      * A managed key or secret expired and cannot be used any more.
      */
-    export const EXPIRED: crypto_errno = 29;
+    export const EXPIRED: crypto_errno = 30;
 
 }
 export type crypto_errno = u16;
